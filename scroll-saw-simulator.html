@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Scroll Saw Simulator — Bane 1: The Outline Race</title>
+<style>
+  :root{
+    --wood-dark:#3E2723;
+    --wood-mid:#7B5236;
+    --wood-light:#C89666;
+    --paper:#F3EBDC;
+    --steel:#9AA0A6;
+    --steel-dark:#4A4E52;
+    --clamp-red:#B23A2E;
+    --safety-orange:#FF6B1A;
+    --ink:#221A14;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--wood-dark);
+    font-family:'Segoe UI', system-ui, sans-serif;
+    color:var(--paper);
+    overflow:hidden;
+  }
+  #stage{
+    position:relative;
+    width:100%; height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center;
+    background:
+      radial-gradient(ellipse at 50% -10%, #5a3a24 0%, transparent 60%),
+      linear-gradient(180deg, #2b1f18 0%, #1b1410 100%);
+  }
+  header{
+    width:100%; max-width:900px;
+    padding:14px 20px 6px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px;
+  }
+  .title{
+    font-family:'Courier New', monospace;
+    font-weight:800;
+    letter-spacing:1px;
+    font-size:15px;
+    color:var(--safety-orange);
+    text-transform:uppercase;
+  }
+  .title small{
+    display:block;
+    font-size:10px;
+    color:#c9b8a2;
+    letter-spacing:2px;
+    font-weight:400;
+    margin-top:2px;
+  }
+  .hud{
+    display:flex; gap:18px; align-items:center;
+    font-family:'Courier New', monospace;
+    font-size:12px;
+  }
+  .hud .stat{ text-align:right; }
+  .hud .stat .val{ font-size:16px; font-weight:700; color:var(--paper); }
+  .hud .stat .lab{ font-size:9px; color:#a08a6f; letter-spacing:1px; }
+
+  .progress-wrap{
+    width:100%; max-width:900px; padding:0 20px;
+  }
+  .progress-track{
+    height:10px; border-radius:6px;
+    background:#1c140f;
+    border:1px solid #4a3527;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--wood-light), var(--safety-orange));
+    transition:width .12s linear;
+  }
+
+  #canvasWrap{
+    position:relative;
+    margin-top:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    border-radius:10px;
+    border:6px solid #201812;
+    overflow:hidden;
+  }
+  canvas{ display:block; cursor:grab; background:#aeb3b7; }
+  canvas:active{ cursor:grabbing; }
+
+  #blowBtn{
+    position:absolute; right:14px; bottom:14px;
+    background:var(--safety-orange);
+    color:#241300;
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    font-size:12px;
+    padding:10px 16px;
+    border:none; border-radius:24px;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease;
+  }
+  #blowBtn:active{ transform:scale(.94); }
+
+  #buyBtn{
+    position:absolute; left:14px; bottom:14px;
+    background:#4a3527;
+    color:#8a7a68;
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:.5px;
+    font-size:11px;
+    padding:10px 14px;
+    border:1px solid #6b5843; border-radius:24px;
+    cursor:not-allowed;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease, background .2s ease, color .2s ease;
+  }
+  #buyBtn.affordable{
+    background:var(--safety-orange);
+    color:#241300;
+    border-color:transparent;
+    cursor:pointer;
+  }
+  #buyBtn.affordable:active{ transform:scale(.94); }
+  #buyBtn.owned{
+    background:#2e5b3a;
+    color:#bdf0c9;
+    border-color:transparent;
+    cursor:default;
+  }
+
+  .instructions{
+    margin-top:10px;
+    font-size:12px;
+    color:#c9b8a2;
+    letter-spacing:.3px;
+    text-align:center;
+    max-width:600px;
+  }
+  .instructions b{ color:var(--safety-orange); }
+
+  .overlay{
+    position:absolute; inset:0;
+    background:rgba(20,14,10,.88);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:20px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h2{
+    font-family:'Courier New', monospace;
+    color:var(--safety-orange);
+    letter-spacing:2px;
+    font-size:26px;
+    margin:0 0 6px 0;
+  }
+  .overlay p.sub{ color:#c9b8a2; font-size:12px; margin:0 0 20px 0; letter-spacing:1px;}
+  .unlock-banner{
+    display:none;
+    background:rgba(255,107,26,0.15);
+    border:1px solid var(--safety-orange);
+    color:var(--safety-orange);
+    font-family:'Courier New', monospace;
+    font-size:11px; font-weight:700; letter-spacing:.5px;
+    padding:8px 14px; border-radius:20px;
+    margin-bottom:18px;
+  }
+  .unlock-banner.show{ display:block; }
+  .stat-row{ display:flex; gap:26px; margin-bottom:24px; }
+  .stat-row .box{ text-align:center; }
+  .stat-row .box .n{ font-size:28px; font-weight:800; font-family:'Courier New', monospace; color:var(--paper); }
+  .stat-row .box .l{ font-size:10px; letter-spacing:1.5px; color:#a08a6f; margin-top:2px; }
+  .btnrow{ display:flex; gap:12px; }
+  button{
+    font-family:'Courier New', monospace;
+    font-weight:700; letter-spacing:1px;
+    padding:11px 20px; border-radius:6px; border:none;
+    cursor:pointer; font-size:12px;
+    transition:transform .1s ease;
+  }
+  button:active{ transform:scale(.96); }
+  .btn-primary{ background:var(--safety-orange); color:#241300; }
+  .btn-ghost{ background:transparent; color:#c9b8a2; border:1px solid #4a3527; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <header>
+    <div class="title">Scroll Saw Simulator<small>Blade Racer · Bane 1 · Sommerfugl</small></div>
+    <div class="hud">
+      <div class="stat"><div class="val" id="hudTime">0.0s</div><div class="lab">TID</div></div>
+      <div class="stat"><div class="val" id="hudAcc">100%</div><div class="lab">PRESISJON</div></div>
+      <div class="stat"><div class="val" id="hudPoints">0♦</div><div class="lab">POENG</div></div>
+    </div>
+  </header>
+
+  <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+
+  <div id="canvasWrap">
+    <canvas id="game" width="640" height="560"></canvas>
+    <button id="blowBtn" title="Blow away the dust (space)">💨 BLOW</button>
+    <button id="buyBtn" title="Kjøp Dust Blower for 3 poeng">🛒 DUST BLOWER — 3♦</button>
+    <div class="overlay" id="overlay">
+      <h2>BANE 1 FULLFØRT!</h2>
+      <p class="sub">Konturen er kuttet — klar for detaljene.</p>
+      <div class="stat-row">
+        <div class="box"><div class="n" id="finalTime">0.0s</div><div class="l">TID</div></div>
+        <div class="box"><div class="n" id="finalAcc">0%</div><div class="l">PRESISJON</div></div>
+        <div class="box"><div class="n" id="finalScore">0</div><div class="l">POENG</div></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn-primary" id="retryBtn">KUTT PÅ NYTT</button>
+        <button class="btn-ghost" id="nextBtn">BANE 2 →</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="instructions">Sagbladet står <b>fast</b>, akkurat som på ekte sag. Beveg musen for å <b>dra arket</b> slik at linjen glir under bladet — fra den <b>grønne prikken</b> til <b>flagget</b>. Sagflisen bygger seg raskt opp etter hvert som du kutter — bruk <b>Blow</b> (mellomrom eller knappen) ofte for å holde sikten. Ingen tidspress — ta den rolig.</p>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W/2, cy = H/2 + 10;
+
+// ---------- Silhouette path, traced from Adrian's butterfly reference ----------
+const BUTTERFLY_RAW = [[163.4, 192.9], [160.2, 195.6], [155.9, 195.6], [152.7, 198.3], [150.0, 201.5], [150.0, 205.8], [150.0, 210.1], [150.1, 214.4], [152.7, 217.6], [154.3, 221.3], [157.3, 224.3], [160.4, 227.4], [163.4, 230.4], [166.5, 233.5], [169.5, 236.5], [172.6, 239.6], [175.6, 242.6], [178.7, 245.7], [181.7, 248.7], [184.8, 251.8], [187.8, 254.8], [190.9, 257.9], [193.9, 260.9], [195.5, 264.6], [198.1, 267.8], [199.3, 271.6], [200.9, 275.3], [201.6, 279.3], [203.6, 282.8], [203.9, 287.0], [206.2, 290.4], [206.3, 294.7], [208.9, 297.9], [210.5, 301.5], [211.6, 305.4], [214.7, 308.4], [218.0, 310.7], [221.6, 312.6], [225.6, 313.4], [229.2, 315.0], [233.1, 316.1], [237.4, 316.1], [241.7, 316.1], [246.0, 316.1], [250.0, 317.0], [250.5, 320.0], [246.8, 321.4], [243.6, 324.1], [239.8, 325.4], [236.0, 326.8], [232.8, 329.5], [229.1, 330.7], [225.3, 332.1], [222.2, 334.9], [219.6, 338.2], [218.0, 341.8], [216.8, 345.7], [214.3, 348.9], [215.9, 352.6], [216.9, 356.5], [216.9, 360.8], [219.4, 364.1], [222.5, 367.1], [225.7, 369.6], [230.1, 369.6], [233.0, 372.6], [233.0, 376.9], [232.4, 380.9], [230.3, 384.4], [230.3, 388.7], [230.3, 393.0], [232.9, 396.3], [234.0, 400.1], [237.1, 403.2], [240.1, 406.2], [244.1, 407.1], [248.4, 407.1], [252.7, 407.1], [257.0, 407.1], [260.9, 406.0], [264.6, 404.4], [268.6, 403.7], [271.6, 400.6], [274.7, 400.6], [277.7, 403.6], [280.8, 406.7], [284.9, 407.1], [289.2, 407.1], [293.5, 407.1], [297.7, 406.7], [300.7, 403.7], [303.8, 400.6], [305.3, 396.9], [306.1, 392.9], [308.0, 389.4], [308.0, 385.1], [308.0, 380.8], [310.7, 377.6], [310.7, 373.3], [310.7, 369.0], [310.7, 364.6], [310.7, 360.3], [310.8, 356.1], [313.9, 354.1], [316.9, 357.1], [318.7, 360.7], [321.1, 359.2], [322.3, 355.3], [325.4, 354.8], [326.7, 358.6], [326.7, 362.9], [326.7, 367.2], [326.7, 371.5], [327.4, 375.6], [329.4, 379.1], [329.4, 383.4], [329.4, 387.7], [332.0, 390.9], [332.1, 395.2], [334.3, 398.6], [335.5, 402.4], [338.5, 405.5], [342.1, 407.1], [346.5, 407.1], [350.8, 407.1], [355.1, 407.1], [358.5, 404.8], [361.5, 401.8], [364.6, 399.4], [367.9, 401.8], [371.5, 403.6], [375.3, 404.8], [378.6, 407.1], [383.0, 407.1], [387.3, 407.1], [391.6, 407.1], [395.9, 407.1], [399.1, 404.4], [402.9, 403.2], [404.4, 399.5], [407.1, 396.3], [407.1, 392.0], [407.1, 387.7], [407.1, 383.4], [406.2, 379.4], [404.4, 375.9], [404.9, 371.8], [408.4, 369.6], [412.6, 369.5], [415.9, 366.9], [419.5, 365.2], [420.6, 361.4], [423.1, 358.1], [423.1, 353.8], [423.1, 349.5], [421.0, 346.1], [420.5, 342.0], [418.7, 338.4], [415.6, 335.3], [412.6, 332.3], [408.8, 331.1], [405.7, 328.1], [401.9, 326.8], [398.0, 325.8], [394.4, 324.1], [391.1, 321.6], [388.6, 318.5], [391.9, 316.1], [396.2, 316.1], [400.5, 316.1], [404.8, 316.1], [408.5, 314.6], [412.3, 313.4], [416.2, 312.3], [419.9, 310.7], [423.1, 308.1], [426.1, 305.0], [428.5, 301.7], [428.5, 297.4], [431.2, 294.2], [432.7, 290.5], [433.9, 286.7], [435.0, 282.8], [436.5, 279.1], [437.3, 275.1], [439.2, 271.6], [441.5, 268.3], [442.7, 264.4], [444.6, 260.9], [446.9, 257.5], [449.9, 254.5], [453.0, 251.4], [456.0, 248.4], [459.1, 245.3], [462.1, 242.3], [465.2, 239.2], [468.2, 236.2], [471.3, 233.1], [474.3, 230.1], [477.4, 227.0], [480.4, 224.0], [483.5, 220.9], [486.5, 217.9], [487.4, 213.9], [487.4, 209.6], [490.0, 206.4], [487.4, 203.2], [486.0, 199.5], [482.9, 196.4], [479.0, 195.6], [475.3, 194.1], [471.4, 192.9], [467.1, 192.9], [462.8, 192.9], [459.1, 194.4], [455.3, 195.6], [451.0, 195.6], [446.7, 195.6], [443.0, 197.1], [439.1, 198.2], [434.8, 198.2], [431.5, 200.6], [427.3, 200.9], [423.0, 201.0], [419.8, 203.6], [415.5, 203.6], [412.3, 206.3], [408.0, 206.3], [404.6, 208.7], [400.8, 209.9], [397.2, 211.6], [393.9, 214.1], [389.7, 214.3], [386.3, 216.4], [382.4, 217.5], [379.4, 220.6], [375.8, 222.3], [372.5, 224.8], [368.6, 226.0], [365.6, 229.0], [361.8, 230.4], [358.7, 233.2], [355.4, 235.7], [351.8, 237.4], [348.8, 240.5], [345.7, 243.5], [342.7, 246.6], [339.6, 249.6], [336.6, 252.7], [333.5, 255.7], [332.1, 259.5], [329.3, 262.4], [326.3, 259.3], [324.1, 255.9], [321.2, 254.5], [316.9, 254.5], [313.4, 255.2], [313.4, 259.6], [312.4, 263.5], [309.3, 263.8], [308.0, 260.1], [305.1, 257.0], [302.1, 253.9], [299.0, 250.9], [296.0, 247.8], [292.9, 244.8], [289.9, 241.7], [286.8, 238.7], [283.8, 235.6], [280.5, 233.1], [276.9, 231.4], [273.8, 228.3], [270.0, 227.2], [266.9, 224.1], [263.4, 222.3], [260.1, 219.9], [256.2, 218.8], [252.6, 217.0], [249.3, 214.6], [245.5, 213.4], [241.9, 211.6], [237.8, 211.1], [234.4, 209.0], [230.9, 206.9], [226.9, 206.3], [223.3, 204.6], [219.4, 203.6], [215.6, 202.3], [211.8, 200.9], [207.9, 199.9], [204.3, 198.2], [200.0, 198.2], [195.7, 198.2], [192.5, 195.6], [188.2, 195.6], [183.9, 195.6], [179.5, 195.6], [176.3, 192.9], [172.0, 192.9], [167.7, 192.9]];
+
+function buildPath(){
+  const pts = BUTTERFLY_RAW.map(p => ({x:p[0]-cx, y:p[1]-cy}));
+  let s = 0;
+  pts[0].s = 0;
+  for(let i=1;i<pts.length;i++){
+    s += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    pts[i].s = s;
+  }
+  pts.totalLen = s;
+  return pts;
+}
+const path = buildPath();
+
+// ---------- Game state ----------
+let currentIndex = 0;
+let deviations = [];
+let startTime = null;
+let finished = false;
+let particles = [];
+let jitterSeed = 0;
+
+const CAPTURE_RADIUS = 18;
+const AHEAD_WINDOW = 16;
+const BACK_TOLERANCE = 3;
+
+// The blade is fixed in place, like the arm on the real scroll saw —
+// the paper moves underneath it instead.
+const BLADE_FIXED = {x: cx, y: 230};
+const PAPER_W = 440, PAPER_H = 480;
+
+function initialPaperCenter(){
+  return { x: BLADE_FIXED.x - path[0].x, y: BLADE_FIXED.y - path[0].y };
+}
+let paperTarget = initialPaperCenter();
+let paperCurrent = initialPaperCenter();
+let prevPaperX = paperCurrent.x;
+let tilt = 0;
+let hasGrabbed = false;
+let dustAmount = 0; // 0..1, builds up as you cut, cleared by blowing
+let blowPuff = 0;   // brief visual kick when blowing
+
+// Meta-progress: 1 point per finished picture, spend 3 to buy the Dust Blower.
+// (Points persist across retries within this session.)
+let points = 0;
+let dustBlowerOwned = false;
+const DUST_BLOWER_COST = 3;
+
+// fixed field of dust specks scattered over the paper, revealed progressively
+const DUST_FIELD = (function(){
+  let seed = 42;
+  const rand = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
+  const pts = [];
+  for(let i=0;i<260;i++){
+    pts.push({
+      x: (rand()-0.5)*PAPER_W*0.92,
+      y: (rand()-0.5)*PAPER_H*0.92,
+      r: 1+rand()*2.2,
+      a: 0.35+rand()*0.4
+    });
+  }
+  return pts;
+})();
+
+function resetGame(){
+  currentIndex = 0;
+  deviations = [];
+  startTime = null;
+  finished = false;
+  particles = [];
+  paperTarget = initialPaperCenter();
+  paperCurrent = initialPaperCenter();
+  prevPaperX = paperCurrent.x;
+  tilt = 0;
+  dustAmount = 0;
+  blowPuff = 0;
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('hudAcc').textContent = '100%';
+  document.getElementById('hudTime').textContent = '0.0s';
+}
+
+canvas.addEventListener('mousemove', (e)=>{
+  const r = canvas.getBoundingClientRect();
+  paperTarget.x = (e.clientX - r.left) * (W/r.width);
+  paperTarget.y = (e.clientY - r.top) * (H/r.height);
+  hasGrabbed = true;
+  if(startTime === null && !finished) startTime = performance.now();
+});
+
+function transformPoint(local){
+  const c = Math.cos(tilt), s = Math.sin(tilt);
+  return {
+    x: paperCurrent.x + local.x*c - local.y*s,
+    y: paperCurrent.y + local.x*s + local.y*c
+  };
+}
+
+function updatePaperPhysics(){
+  // weighted drag, like moving an actual piece of wood by hand
+  paperCurrent.x += (paperTarget.x - paperCurrent.x) * 0.16;
+  paperCurrent.y += (paperTarget.y - paperCurrent.y) * 0.16;
+  const vx = paperCurrent.x - prevPaperX;
+  prevPaperX = paperCurrent.x;
+  const targetTilt = Math.max(-0.14, Math.min(0.14, vx*0.045));
+  tilt += (targetTilt - tilt) * 0.18;
+}
+
+function nearestAhead(){
+  let best = -1, bestD = Infinity, bestPt = null;
+  const lo = Math.max(0, currentIndex - BACK_TOLERANCE);
+  const hi = Math.min(path.length-1, currentIndex + AHEAD_WINDOW);
+  for(let i=lo;i<=hi;i++){
+    const p = transformPoint(path[i]);
+    const d = Math.hypot(p.x-BLADE_FIXED.x, p.y-BLADE_FIXED.y);
+    if(d < bestD){ bestD = d; best = i; bestPt = p; }
+  }
+  return {idx:best, dist:bestD, pt:bestPt};
+}
+
+function spawnDust(x,y){
+  for(let k=0;k<2;k++){
+    particles.push({
+      x, y,
+      vx:(Math.random()-0.5)*1.6,
+      vy:-Math.random()*1.2-0.3,
+      life:1,
+      r: 1.5+Math.random()*2
+    });
+  }
+}
+
+let lastDist = 999;
+function update(){
+  updatePaperPhysics();
+  if(finished || !hasGrabbed) return;
+  const {idx, dist} = nearestAhead();
+  lastDist = dist;
+  if(idx > currentIndex && dist < CAPTURE_RADIUS){
+    const steps = idx-currentIndex;
+    for(let i=currentIndex+1;i<=idx;i++) deviations.push(dist);
+    currentIndex = idx;
+    spawnDust(BLADE_FIXED.x, BLADE_FIXED.y);
+    dustAmount = Math.min(1, dustAmount + steps*0.016);
+  }
+  if(blowPuff > 0) blowPuff -= 0.05;
+  if(dustBlowerOwned && dustAmount > 0){
+    dustAmount = Math.max(0, dustAmount - 0.004);
+  }
+  particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.life-=0.02; });
+  particles = particles.filter(p=>p.life>0);
+
+  const progress = currentIndex/(path.length-1);
+  document.getElementById('progressFill').style.width = (progress*100).toFixed(1)+'%';
+
+  if(deviations.length){
+    const avg = deviations.reduce((a,b)=>a+b,0)/deviations.length;
+    const acc = Math.max(0, 100 - (avg/CAPTURE_RADIUS)*100);
+    document.getElementById('hudAcc').textContent = Math.round(acc)+'%';
+  }
+  if(startTime !== null){
+    const t = (performance.now()-startTime)/1000;
+    document.getElementById('hudTime').textContent = t.toFixed(1)+'s';
+  }
+
+  if(currentIndex >= path.length-2 && !finished){
+    finished = true;
+    const avg = deviations.length ? deviations.reduce((a,b)=>a+b,0)/deviations.length : 0;
+    const acc = Math.max(0, 100 - (avg/CAPTURE_RADIUS)*100);
+    const t = startTime !== null ? (performance.now()-startTime)/1000 : 0;
+    const score = Math.round(acc*10 + Math.max(0, 90-t)*4);
+    document.getElementById('finalTime').textContent = t.toFixed(1)+'s';
+    document.getElementById('finalAcc').textContent = Math.round(acc)+'%';
+    document.getElementById('finalScore').textContent = score;
+
+    points++;
+    document.getElementById('hudPoints').textContent = points+'♦';
+    updateBuyBtn();
+    setTimeout(()=> document.getElementById('overlay').classList.add('show'), 500);
+  }
+}
+
+// ---------- Rendering ----------
+function drawSawBase(){
+  // brushed grey metal table, like the real saw's base plate
+  const g = ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0, '#c7cbce');
+  g.addColorStop(0.5, '#aeb3b7');
+  g.addColorStop(1, '#9a9fa3');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // circular brushed-metal swirl marks
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#7d8286';
+  for(let i=0;i<10;i++){
+    ctx.beginPath();
+    ctx.arc(W*0.42, H*0.46, 40+i*34, 0, Math.PI*2);
+    ctx.lineWidth = 1 + (i%3===0 ? 0.6:0);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // faint directional brushing
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = '#ffffff';
+  for(let i=0;i<24;i++){
+    ctx.beginPath();
+    const y0 = -10 + i*24;
+    ctx.moveTo(-10,y0);
+    ctx.lineTo(W+10, y0+8);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // mounting screw holes, like on the real table
+  ctx.fillStyle = '#5f6366';
+  const holes = [[60,50],[W-60,46],[W-70,H-40],[80,H-90],[W-40,H*0.5]];
+  holes.forEach(([x,y])=>{
+    ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
+  });
+
+  // subtle vignette so the paper pops in the middle
+  const vg = ctx.createRadialGradient(W/2,H/2,H*0.25, W/2,H/2,H*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,0.14)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0,0,W,H);
+}
+
+function drawHand(side, hy){
+  // side: -1 = left hand, 1 = right hand (mirrored). Solid silhouette,
+  // no interior detail — same visual language as Adrian's own scroll saw art.
+  const silhouette = '#1c1510';
+  const hx = side * PAPER_W*0.30;
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.scale(side, 1);
+  ctx.rotate(-0.25);
+
+  ctx.fillStyle = silhouette;
+
+  // four fingers, held together, all pointing the same direction
+  const fingerLen = [58, 68, 64, 52];
+  const fingerX   = [-30, -10, 10, 30];
+  for(let i=0;i<4;i++){
+    ctx.beginPath();
+    roundRect(fingerX[i]-9, -14-fingerLen[i], 18, fingerLen[i], 8);
+    ctx.fill();
+  }
+
+  // palm / back of hand
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 52, 38, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // thumb, splayed inward toward the other hand
+  ctx.save();
+  ctx.translate(-58, 22);
+  ctx.rotate(-0.9);
+  ctx.beginPath();
+  roundRect(-10, -44, 20, 44, 9);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawPaper(){
+  ctx.save();
+  ctx.translate(paperCurrent.x, paperCurrent.y);
+  ctx.rotate(tilt);
+
+  // shadow
+  ctx.save();
+  ctx.translate(6,10);
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  roundRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H, 10);
+  ctx.fill();
+  ctx.restore();
+
+  // paper sheet
+  ctx.fillStyle = '#F6F1E6';
+  ctx.strokeStyle = '#d8cdb4';
+  ctx.lineWidth = 1.5;
+  roundRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H, 10);
+  ctx.fill(); ctx.stroke();
+
+  // guide (dashed, uncut)
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = 'rgba(40,30,20,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  path.forEach((p,i)=> i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  // cut portion (solid kerf)
+  if(currentIndex > 0){
+    ctx.save();
+    ctx.strokeStyle = '#1c130c';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for(let i=1;i<=currentIndex;i++) ctx.lineTo(path[i].x, path[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // start marker
+  ctx.fillStyle = '#4caf50';
+  ctx.beginPath(); ctx.arc(path[0].x, path[0].y, 6, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#1b1410'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // goal marker (flag)
+  const g = path[path.length-1];
+  ctx.strokeStyle = '#241a12'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y-16); ctx.stroke();
+  ctx.fillStyle = finished ? '#4caf50' : '#B23A2E';
+  ctx.beginPath();
+  ctx.moveTo(g.x, g.y-16); ctx.lineTo(g.x+11, g.y-12); ctx.lineTo(g.x, g.y-8);
+  ctx.closePath(); ctx.fill();
+
+  // sawdust building up on the piece as it's cut
+  if(dustAmount > 0){
+    const revealCount = Math.floor(dustAmount * DUST_FIELD.length);
+    ctx.save();
+    ctx.fillStyle = '#c8b28c';
+    ctx.globalAlpha = Math.min(1, dustAmount*1.05);
+    ctx.fillRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H);
+    for(let i=0;i<revealCount;i++){
+      const d = DUST_FIELD[i];
+      ctx.globalAlpha = d.a * Math.min(1, dustAmount*1.3);
+      ctx.fillStyle = '#8a7455';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // both hands guiding the piece, clear of the artwork
+  drawHand(-1, PAPER_H*0.42);
+  drawHand(1, PAPER_H*0.42);
+
+  ctx.restore();
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawDust(){
+  particles.forEach(p=>{
+    ctx.fillStyle = `rgba(214,158,94,${p.life})`;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+function drawBladeArm(){
+  jitterSeed += 0.5;
+  const jx = Math.sin(jitterSeed*4)*0.5;
+  const bx = BLADE_FIXED.x + jx, by = BLADE_FIXED.y;
+  const offTrack = hasGrabbed && !finished && lastDist > CAPTURE_RADIUS;
+  ctx.save();
+  if(offTrack){
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ff4d3d';
+    ctx.beginPath();
+    ctx.arc(bx, by+2, 15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // mechanical arm from the top of the frame down to the blade
+  ctx.strokeStyle = '#3a3d40';
+  ctx.lineWidth = 10;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(bx-4, -10);
+  ctx.lineTo(bx-4, by-70);
+  ctx.stroke();
+  ctx.fillStyle = '#2b2d30';
+  ctx.beginPath();
+  ctx.ellipse(bx-4, by-70, 15, 12, 0, 0, Math.PI*2);
+  ctx.fill();
+  // clamp arm
+  ctx.strokeStyle = '#8B9099';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx-4, by-70);
+  ctx.lineTo(bx, by-16);
+  ctx.stroke();
+  // red clamp
+  ctx.fillStyle = '#B23A2E';
+  ctx.strokeStyle = '#241a12'; ctx.lineWidth = 1.5;
+  ctx.fillRect(bx-7, by-16, 14, 22);
+  ctx.strokeRect(bx-7, by-16, 14, 22);
+  // needle tip
+  ctx.strokeStyle = '#e8e8e8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx, by+6); ctx.lineTo(bx, by+16);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function loop(){
+  update();
+  ctx.clearRect(0,0,W,H);
+  drawSawBase();
+  drawPaper();
+  drawDust();
+  drawBladeArm();
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.getElementById('retryBtn').addEventListener('click', resetGame);
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  alert('Bane 2: The Detail Run kommer i neste prototype-runde 🪚');
+});
+
+function blowDust(){
+  if(dustAmount <= 0 || finished) return;
+  blowPuff = 1;
+  // a burst of dust particles flying off to the side, like the air nozzle
+  for(let k=0;k<26;k++){
+    particles.push({
+      x: BLADE_FIXED.x - 60 + Math.random()*30,
+      y: BLADE_FIXED.y + (Math.random()-0.5)*160,
+      vx: 4+Math.random()*5,
+      vy: (Math.random()-0.5)*2,
+      life: 1,
+      r: 1.5+Math.random()*3
+    });
+  }
+  const start = dustAmount;
+  const t0 = performance.now();
+  (function anim(){
+    const t = Math.min(1, (performance.now()-t0)/450);
+    dustAmount = start*(1-t);
+    if(t < 1) requestAnimationFrame(anim);
+  })();
+}
+function updateBuyBtn(){
+  const btn = document.getElementById('buyBtn');
+  if(dustBlowerOwned){
+    btn.textContent = '✅ DUST BLOWER';
+    btn.classList.remove('affordable');
+    btn.classList.add('owned');
+  } else if(points >= DUST_BLOWER_COST){
+    btn.textContent = '🛒 DUST BLOWER — '+DUST_BLOWER_COST+'♦';
+    btn.classList.add('affordable');
+  } else {
+    btn.textContent = '🛒 DUST BLOWER — '+DUST_BLOWER_COST+'♦ ('+points+'/'+DUST_BLOWER_COST+')';
+    btn.classList.remove('affordable');
+  }
+}
+updateBuyBtn();
+
+document.getElementById('buyBtn').addEventListener('click', ()=>{
+  if(dustBlowerOwned || points < DUST_BLOWER_COST) return;
+  points -= DUST_BLOWER_COST;
+  dustBlowerOwned = true;
+  document.getElementById('hudPoints').textContent = points+'♦';
+  updateBuyBtn();
+});
+
+document.getElementById('blowBtn').addEventListener('click', blowDust);
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); blowDust(); }
+});
+</script>
+</body>
+</html>
