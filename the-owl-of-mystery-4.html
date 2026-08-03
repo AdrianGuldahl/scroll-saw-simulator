@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>Scroll Saw Simulator — The Owl of Mystery</title>
+<style>
+  :root{
+    --wood-dark:#3E2723;
+    --wood-mid:#7B5236;
+    --wood-light:#C89666;
+    --paper:#F3EBDC;
+    --steel:#9AA0A6;
+    --steel-dark:#4A4E52;
+    --clamp-red:#B23A2E;
+    --safety-orange:#FF6B1A;
+    --ink:#221A14;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--wood-dark);
+    font-family:'Segoe UI', system-ui, sans-serif;
+    color:var(--paper);
+    overflow:hidden;
+  }
+  #stage{
+    position:relative;
+    width:100%; height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center;
+    background:
+      radial-gradient(ellipse at 50% -10%, #5a3a24 0%, transparent 60%),
+      linear-gradient(180deg, #2b1f18 0%, #1b1410 100%);
+  }
+  header{
+    width:100%; max-width:900px;
+    padding:14px 20px 6px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px;
+  }
+  .title{
+    font-family:'Courier New', monospace;
+    font-weight:800;
+    letter-spacing:1px;
+    font-size:15px;
+    color:var(--safety-orange);
+    text-transform:uppercase;
+  }
+  .title small{
+    display:block;
+    font-size:10px;
+    color:#c9b8a2;
+    letter-spacing:2px;
+    font-weight:400;
+    margin-top:2px;
+  }
+  .hud{
+    display:flex; gap:18px; align-items:center;
+    font-family:'Courier New', monospace;
+    font-size:12px;
+  }
+  .hud .stat{ text-align:right; }
+  .hud .stat .val{ font-size:16px; font-weight:700; color:var(--paper); }
+  .hud .stat .lab{ font-size:9px; color:#a08a6f; letter-spacing:1px; }
+
+  .progress-wrap{
+    width:100%; max-width:900px; padding:0 20px;
+  }
+  .progress-track{
+    height:10px; border-radius:6px;
+    background:#1c140f;
+    border:1px solid #4a3527;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--wood-light), var(--safety-orange));
+    transition:width .12s linear;
+  }
+
+  #canvasWrap{
+    position:relative;
+    margin-top:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    border-radius:10px;
+    border:6px solid #201812;
+    overflow:hidden;
+  }
+  canvas{ display:block; cursor:grab; background:#aeb3b7; }
+  canvas:active{ cursor:grabbing; }
+
+  #blowBtn{
+    position:absolute; right:14px; top:14px;
+    width:118px; height:42px; box-sizing:border-box;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--safety-orange);
+    color:#241300;
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    font-size:12px;
+    padding:0;
+    border:none; border-radius:16px;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease;
+  }
+  #blowBtn:active{ transform:scale(.94); }
+
+  #blowHint{
+    position:absolute; top:24px; right:150px;
+    pointer-events:none;
+    animation: blowHintPulse 1.6s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  }
+  #blowHint.hide{ display:none; }
+  @keyframes blowHintPulse{
+    0%,100%{ opacity:.5; transform:translate(0,0); }
+    50%{ opacity:1; transform:translate(6px,0); }
+  }
+
+  #buyBtn{
+    position:absolute; right:14px; top:62px;
+    width:118px; height:42px; box-sizing:border-box;
+    background:#6b3f1e;
+    color:#ffc79a;
+    font-family:'Courier New', monospace;
+    padding:0 6px;
+    border:1px solid #a85a2c; border-radius:16px;
+    cursor:not-allowed;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease, background .2s ease, color .2s ease;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15;
+    overflow:hidden;
+  }
+  #buyBtn .buy-title{ font-weight:800; letter-spacing:.5px; font-size:10px; white-space:nowrap; }
+  #buyBtn .buy-sub{ font-weight:700; letter-spacing:.2px; font-size:12px; opacity:.95; white-space:nowrap; }
+  #buyBtn.affordable{
+    background:var(--safety-orange);
+    color:#241300;
+    border-color:transparent;
+    cursor:pointer;
+  }
+  #buyBtn.affordable:active{ transform:scale(.94); }
+  #buyBtn.owned{
+    background:#2e5b3a;
+    color:#bdf0c9;
+    border-color:transparent;
+    cursor:default;
+  }
+
+  .vib-panel{
+    display:none;
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(20,14,10,.94);
+    border:1px solid var(--safety-orange);
+    border-radius:10px;
+    padding:20px 26px;
+    text-align:center;
+    width:230px;
+    box-shadow:0 12px 40px rgba(0,0,0,.6);
+    z-index:20;
+  }
+  .vib-panel.show{ display:block; }
+  .vib-title{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    color:var(--safety-orange);
+    font-size:15px; margin-bottom:6px;
+  }
+  .vib-sub{ font-size:11px; color:#c9b8a2; margin-bottom:14px; line-height:1.4; }
+  .vib-bolt-wrap{ margin-bottom:12px; }
+  #vibBolt{ transition: transform .1s ease; }
+  #vibBolt.shake{ animation: vibShake .15s linear infinite; }
+  @keyframes vibShake{
+    0%,100%{ transform:translateX(0) rotate(0deg); }
+    25%{ transform:translateX(-2px) rotate(-3deg); }
+    75%{ transform:translateX(2px) rotate(3deg); }
+  }
+  .vib-track{
+    height:8px; border-radius:5px; background:#1c140f;
+    border:1px solid #4a3527; overflow:hidden; margin-bottom:14px;
+  }
+  .vib-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--wood-light), var(--safety-orange));
+    transition:width .12s ease;
+  }
+  #tightenBtn{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    padding:10px 18px; border-radius:6px; border:none;
+    cursor:pointer; font-size:12px;
+    background:var(--safety-orange); color:#241300;
+  }
+  #tightenBtn:active{ transform:scale(.94); }
+
+  .instructions{
+    margin-top:10px;
+    font-size:12px;
+    color:#c9b8a2;
+    letter-spacing:.3px;
+    text-align:center;
+    max-width:600px;
+  }
+  .instructions b{ color:var(--safety-orange); }
+
+  .overlay{
+    position:absolute; inset:0;
+    background:rgba(20,14,10,.88);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:20px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h2{
+    font-family:'Courier New', monospace;
+    color:var(--safety-orange);
+    letter-spacing:2px;
+    font-size:26px;
+    margin:0 0 6px 0;
+  }
+  .overlay p.sub{ color:#c9b8a2; font-size:12px; margin:0 0 20px 0; letter-spacing:1px;}
+  .unlock-banner{
+    display:none;
+    background:rgba(255,107,26,0.15);
+    border:1px solid var(--safety-orange);
+    color:var(--safety-orange);
+    font-family:'Courier New', monospace;
+    font-size:11px; font-weight:700; letter-spacing:.5px;
+    padding:8px 14px; border-radius:20px;
+    margin-bottom:18px;
+  }
+  .unlock-banner.show{ display:block; }
+  .stat-row{ display:flex; gap:26px; margin-bottom:24px; }
+  .stat-row .box{ text-align:center; }
+  .stat-row .box .n{ font-size:28px; font-weight:800; font-family:'Courier New', monospace; color:var(--paper); }
+  .stat-row .box .l{ font-size:10px; letter-spacing:1.5px; color:#a08a6f; margin-top:2px; }
+  .btnrow{ display:flex; gap:12px; }
+  button{
+    font-family:'Courier New', monospace;
+    font-weight:700; letter-spacing:1px;
+    padding:11px 20px; border-radius:6px; border:none;
+    cursor:pointer; font-size:12px;
+    transition:transform .1s ease;
+  }
+  button:active{ transform:scale(.96); }
+  .btn-primary{ background:var(--safety-orange); color:#241300; }
+  .btn-ghost{ background:transparent; color:#c9b8a2; border:1px solid #4a3527; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <header>
+    <div class="title">Scroll Saw Simulator<small>The Owl of Mystery</small></div>
+    <div class="hud">
+      <div class="stat"><div class="val" id="hudTime">0.0s</div><div class="lab">TIME</div></div>
+      <div class="stat"><div class="val" id="hudAcc">100%</div><div class="lab">PRECISION</div></div>
+      <div class="stat"><div class="val" id="hudPoints">0♦</div><div class="lab">POINTS</div></div>
+    </div>
+  </header>
+
+  <div class="progress-wrap"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+
+  <div id="canvasWrap">
+    <canvas id="game" width="640" height="560"></canvas>
+    <button id="blowBtn" title="Blow away the dust (space)">💨 BLOW</button>
+    <div id="blowHint">
+      <svg width="64" height="30" viewBox="0 0 64 30">
+        <line x1="4" y1="15" x2="52" y2="15" stroke="#4caf50" stroke-width="4" stroke-linecap="round"/>
+        <polygon points="62,15 48,7 48,23" fill="#4caf50"/>
+      </svg>
+    </div>
+    <button id="buyBtn" title="Buy Dust Blower for 3 points">🛒 DUST BLOWER — 3♦</button>
+
+    <div class="vib-panel" id="vibPanel">
+      <div class="vib-title">⚠️ VIBRATION</div>
+      <div class="vib-sub">A bolt's come loose — tighten it before you keep cutting.</div>
+      <div class="vib-bolt-wrap">
+        <svg id="vibBolt" width="70" height="70" viewBox="0 0 70 70">
+          <circle cx="35" cy="35" r="26" fill="#8B9099" stroke="#3a3d40" stroke-width="3"/>
+          <polygon points="35,14 45,20 45,32 35,38 25,32 25,20" fill="#4a4e52" stroke="#241a12" stroke-width="1.5"/>
+          <circle cx="35" cy="26" r="4" fill="#1c1414"/>
+        </svg>
+      </div>
+      <div class="vib-track"><div class="vib-fill" id="vibFill"></div></div>
+      <button id="tightenBtn">🔧 TIGHTEN</button>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <h2>THE OWL OF MYSTERY — COMPLETE!</h2>
+      <p class="sub">All four pieces are cut. Time to see what you've made.</p>
+      <div class="stat-row">
+        <div class="box"><div class="n" id="finalTime">0.0s</div><div class="l">TIME</div></div>
+        <div class="box"><div class="n" id="finalAcc">0%</div><div class="l">PRECISION</div></div>
+        <div class="box"><div class="n" id="finalScore">0</div><div class="l">SCORE</div></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn-primary" id="retryBtn">CUT AGAIN</button>
+        <button class="btn-ghost" id="nextBtn">SEE THE FINISHED OWL →</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="instructions">The blade stays <b>fixed</b>, just like on a real saw. Move your mouse to <b>drag the paper</b> so the line slides under the blade — from the <b>green dot</b> to the <b>flag</b>. Sawdust builds up fast as you cut. This is the biggest piece yet — expect the saw to start <b>vibrating</b> more than once, each time needing a bolt tightened before you can continue. Finish pictures to earn points toward the <b>Dust Blower</b> upgrade. No time pressure — take it slow.</p>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W/2, cy = H/2 + 10;
+
+// ---------- Silhouette path, traced from Adrian's butterfly reference ----------
+const BUTTERFLY_RAW = [[400.0, 130.0], [397.3, 135.0], [392.9, 139.4], [388.5, 143.8], [384.2, 148.2], [379.8, 152.5], [374.7, 155.3], [369.7, 158.1], [364.7, 160.8], [359.6, 163.6], [353.9, 164.7], [348.4, 166.4], [343.2, 168.7], [337.0, 168.7], [331.1, 168.1], [325.6, 166.4], [320.3, 164.2], [314.2, 164.2], [308.0, 164.2], [301.8, 164.2], [295.6, 164.2], [289.4, 164.2], [283.2, 164.2], [277.7, 165.8], [271.8, 166.4], [266.6, 168.7], [260.4, 168.7], [254.9, 167.0], [248.9, 166.4], [243.7, 164.2], [238.4, 161.9], [233.2, 159.6], [228.0, 157.3], [222.7, 155.0], [218.3, 150.9], [213.9, 146.5], [209.5, 142.1], [205.2, 137.8], [202.0, 132.9], [199.7, 135.6], [197.8, 141.0], [197.4, 147.0], [197.7, 153.1], [199.7, 158.4], [201.6, 163.8], [204.4, 168.8], [207.1, 173.9], [211.7, 177.8], [216.6, 181.0], [221.6, 183.8], [226.6, 186.6], [232.3, 187.7], [237.9, 189.2], [244.1, 189.2], [249.3, 191.5], [255.5, 191.5], [261.5, 191.9], [266.6, 194.6], [271.6, 197.4], [276.7, 200.2], [281.0, 204.5], [285.4, 208.9], [288.5, 213.8], [290.9, 219.0], [293.0, 224.3], [293.0, 230.5], [293.0, 236.7], [293.0, 242.9], [290.8, 248.1], [288.2, 253.2], [283.8, 257.6], [279.5, 262.0], [275.1, 266.3], [270.0, 268.9], [264.7, 271.2], [258.5, 271.2], [252.3, 271.2], [246.2, 271.2], [240.8, 269.1], [235.7, 266.6], [230.8, 263.5], [226.4, 259.2], [222.0, 254.8], [219.2, 249.7], [216.5, 244.7], [215.6, 238.9], [215.6, 232.7], [215.6, 226.5], [216.2, 220.5], [217.9, 215.1], [221.7, 210.5], [224.4, 205.4], [225.2, 201.0], [220.1, 198.3], [214.4, 199.5], [211.1, 204.3], [208.8, 209.5], [206.5, 214.7], [205.0, 220.3], [204.2, 226.2], [204.2, 232.4], [204.2, 238.5], [206.5, 243.8], [206.5, 250.0], [208.8, 255.2], [211.5, 260.3], [215.6, 264.8], [217.1, 269.7], [215.6, 275.2], [215.6, 281.4], [215.3, 287.5], [213.3, 292.8], [213.7, 298.9], [215.6, 304.3], [215.6, 310.5], [215.6, 316.6], [217.9, 321.9], [219.5, 327.4], [220.7, 333.1], [223.4, 338.2], [224.7, 343.8], [227.3, 348.9], [230.1, 353.9], [233.8, 358.6], [237.2, 363.4], [240.0, 368.4], [244.4, 372.8], [247.1, 377.8], [251.5, 382.2], [255.9, 386.6], [260.3, 390.9], [265.3, 393.7], [269.7, 398.1], [274.7, 400.9], [279.1, 405.2], [284.2, 407.8], [289.2, 410.7], [294.2, 413.5], [299.2, 416.3], [297.6, 421.2], [295.0, 426.3], [292.2, 431.4], [288.5, 436.0], [286.2, 441.3], [283.9, 446.5], [281.1, 451.5], [275.7, 453.3], [269.5, 453.3], [264.3, 455.6], [259.0, 457.8], [254.3, 460.7], [252.1, 465.9], [256.3, 469.2], [261.5, 467.0], [266.4, 464.0], [271.5, 463.6], [274.2, 468.7], [278.6, 470.0], [281.6, 466.4], [285.2, 462.4], [289.8, 466.1], [294.9, 468.8], [300.6, 468.5], [302.1, 463.0], [298.2, 458.4], [293.1, 455.7], [291.2, 450.6], [293.9, 445.6], [296.7, 440.5], [299.5, 435.5], [302.1, 430.4], [304.4, 425.2], [308.2, 421.4], [314.4, 421.4], [319.6, 423.7], [325.5, 424.3], [331.0, 426.0], [337.2, 426.0], [342.5, 428.3], [345.4, 432.8], [342.6, 437.9], [339.9, 442.9], [337.1, 448.0], [332.7, 452.3], [326.9, 453.3], [321.7, 455.6], [316.3, 457.4], [311.9, 461.8], [311.8, 467.5], [317.2, 469.2], [321.8, 465.5], [326.9, 462.7], [331.7, 464.9], [333.6, 469.2], [339.4, 468.4], [342.2, 463.3], [347.2, 464.3], [352.3, 467.0], [357.6, 469.2], [361.3, 465.5], [359.2, 460.2], [354.1, 457.5], [348.7, 455.6], [345.4, 451.4], [347.7, 446.1], [350.0, 440.9], [352.2, 435.6], [354.6, 430.4], [359.9, 428.3], [365.3, 426.5], [371.3, 426.0], [377.4, 426.1], [382.5, 428.9], [386.8, 433.3], [391.9, 436.0], [396.3, 440.4], [401.3, 443.2], [406.3, 445.9], [411.4, 448.7], [416.6, 451.0], [422.8, 451.0], [428.0, 453.3], [434.2, 453.3], [440.4, 453.3], [442.6, 450.3], [438.7, 445.7], [436.5, 440.5], [434.2, 435.2], [429.9, 430.8], [424.8, 428.3], [419.2, 426.9], [413.5, 425.8], [408.4, 423.0], [403.4, 420.2], [398.4, 417.5], [393.4, 414.6], [388.9, 410.3], [383.9, 407.6], [379.5, 403.2], [374.5, 400.4], [370.1, 396.1], [365.7, 391.7], [363.0, 386.6], [358.6, 382.3], [354.5, 377.8], [351.5, 372.9], [348.7, 367.8], [345.9, 362.8], [343.1, 357.8], [340.8, 352.5], [338.6, 347.3], [336.3, 342.0], [334.0, 336.8], [334.0, 330.6], [331.7, 325.4], [331.7, 319.2], [329.5, 313.9], [329.5, 307.7], [329.5, 301.6], [330.0, 295.6], [331.7, 290.1], [334.0, 284.9], [335.1, 279.2], [337.9, 274.1], [335.6, 271.2], [330.4, 268.9], [325.1, 266.6], [320.7, 262.4], [316.3, 258.0], [312.0, 253.7], [309.2, 248.6], [308.0, 242.9], [306.7, 237.3], [306.7, 231.1], [306.7, 224.9], [309.0, 219.7], [311.1, 214.4], [313.9, 209.3], [318.2, 205.0], [322.6, 200.6], [327.7, 197.8], [332.2, 193.8], [337.7, 192.3], [343.6, 191.5], [349.2, 190.0], [355.0, 189.2], [361.2, 189.2], [366.9, 188.1], [372.6, 186.9], [377.7, 184.2], [382.7, 181.5], [387.4, 177.8], [392.1, 174.3], [395.5, 169.5], [397.8, 164.3], [400.0, 159.0], [401.6, 153.5], [402.3, 147.6], [402.3, 141.4], [400.0, 136.2]];
+
+function buildPath(){
+  const pts = BUTTERFLY_RAW.map(p => ({x:p[0]-cx, y:p[1]-cy}));
+  let s = 0;
+  pts[0].s = 0;
+  for(let i=1;i<pts.length;i++){
+    s += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    pts[i].s = s;
+  }
+  pts.totalLen = s;
+  return pts;
+}
+const path = buildPath();
+
+// ---------- Game state ----------
+let currentIndex = 0;
+let deviations = [];
+let startTime = null;
+let finished = false;
+let particles = [];
+let jitterSeed = 0;
+
+const CAPTURE_RADIUS = 12;
+const AHEAD_WINDOW = 11;
+const BACK_TOLERANCE = 3;
+
+// The blade is fixed in place, like the arm on the real scroll saw —
+// the paper moves underneath it instead.
+const BLADE_FIXED = {x: cx, y: 230};
+const PAPER_W = 440, PAPER_H = 480;
+
+function initialPaperCenter(){
+  return { x: BLADE_FIXED.x - path[0].x, y: BLADE_FIXED.y - path[0].y };
+}
+let paperTarget = initialPaperCenter();
+let paperCurrent = initialPaperCenter();
+let prevPaperX = paperCurrent.x;
+let tilt = 0;
+let hasGrabbed = false;
+let dustAmount = 0; // 0..1, builds up as you cut, cleared by blowing
+let blowPuff = 0;   // brief visual kick when blowing
+
+// Meta-progress: 1 point per finished picture, spend 3 to buy the Dust Blower.
+// (Points persist across retries within this session.)
+let points = 0;
+let dustBlowerOwned = false;
+const DUST_BLOWER_COST = 3;
+
+// ---------- Vibration mechanic ----------
+const VIBRATION_TRIGGERS = [0.30, 0.68]; // this piece is bigger — it shakes twice
+let nextVibrationIdx = 0;
+const TIGHTEN_CLICKS_NEEDED = 5;
+let vibrationActive = false;
+let tightenProgress = 0;
+
+function startVibration(){
+  vibrationActive = true;
+  tightenProgress = 0;
+  document.getElementById('vibFill').style.width = '0%';
+  document.getElementById('vibBolt').classList.add('shake');
+  document.getElementById('vibPanel').classList.add('show');
+  document.querySelector('.vib-sub').textContent = nextVibrationIdx <= 1
+    ? "A bolt's come loose — tighten it before you keep cutting."
+    : "Again?! Big pieces are hard on the saw — tighten it back up.";
+}
+function resolveVibration(){
+  vibrationActive = false;
+  document.getElementById('vibBolt').classList.remove('shake');
+  document.getElementById('vibPanel').classList.remove('show');
+}
+document.getElementById('tightenBtn').addEventListener('click', ()=>{
+  if(!vibrationActive) return;
+  tightenProgress++;
+  document.getElementById('vibFill').style.width = Math.min(100,(tightenProgress/TIGHTEN_CLICKS_NEEDED)*100)+'%';
+  if(tightenProgress >= TIGHTEN_CLICKS_NEEDED) resolveVibration();
+});
+
+
+
+
+// fixed field of dust specks scattered over the paper, revealed progressively
+const DUST_FIELD = (function(){
+  let seed = 42;
+  const rand = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
+  const pts = [];
+  for(let i=0;i<260;i++){
+    pts.push({
+      x: (rand()-0.5)*PAPER_W*0.92,
+      y: (rand()-0.5)*PAPER_H*0.92,
+      r: 1+rand()*2.2,
+      a: 0.35+rand()*0.4
+    });
+  }
+  return pts;
+})();
+
+function resetGame(){
+  currentIndex = 0;
+  deviations = [];
+  startTime = null;
+  finished = false;
+  particles = [];
+  paperTarget = initialPaperCenter();
+  paperCurrent = initialPaperCenter();
+  prevPaperX = paperCurrent.x;
+  tilt = 0;
+  dustAmount = 0;
+  blowPuff = 0;
+  nextVibrationIdx = 0;
+  vibrationActive = false;
+  tightenProgress = 0;
+  document.getElementById('vibPanel').classList.remove('show');
+  document.getElementById('vibBolt').classList.remove('shake');
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('hudAcc').textContent = '100%';
+  document.getElementById('hudTime').textContent = '0.0s';
+}
+
+canvas.addEventListener('mousemove', (e)=>{
+  const r = canvas.getBoundingClientRect();
+  paperTarget.x = (e.clientX - r.left) * (W/r.width);
+  paperTarget.y = (e.clientY - r.top) * (H/r.height);
+  hasGrabbed = true;
+  if(startTime === null && !finished) startTime = performance.now();
+});
+
+function transformPoint(local){
+  const c = Math.cos(tilt), s = Math.sin(tilt);
+  return {
+    x: paperCurrent.x + local.x*c - local.y*s,
+    y: paperCurrent.y + local.x*s + local.y*c
+  };
+}
+
+function updatePaperPhysics(){
+  // weighted drag, like moving an actual piece of wood by hand
+  paperCurrent.x += (paperTarget.x - paperCurrent.x) * 0.16;
+  paperCurrent.y += (paperTarget.y - paperCurrent.y) * 0.16;
+  const vx = paperCurrent.x - prevPaperX;
+  prevPaperX = paperCurrent.x;
+  const targetTilt = Math.max(-0.14, Math.min(0.14, vx*0.045));
+  tilt += (targetTilt - tilt) * 0.18;
+}
+
+function nearestAhead(){
+  let best = -1, bestD = Infinity, bestPt = null;
+  const lo = Math.max(0, currentIndex - BACK_TOLERANCE);
+  const hi = Math.min(path.length-1, currentIndex + AHEAD_WINDOW);
+  for(let i=lo;i<=hi;i++){
+    const p = transformPoint(path[i]);
+    const d = Math.hypot(p.x-BLADE_FIXED.x, p.y-BLADE_FIXED.y);
+    if(d < bestD){ bestD = d; best = i; bestPt = p; }
+  }
+  return {idx:best, dist:bestD, pt:bestPt};
+}
+
+function spawnDust(x,y){
+  for(let k=0;k<2;k++){
+    particles.push({
+      x, y,
+      vx:(Math.random()-0.5)*1.6,
+      vy:-Math.random()*1.2-0.3,
+      life:1,
+      r: 1.5+Math.random()*2
+    });
+  }
+}
+
+let lastDist = 999;
+function update(){
+  updatePaperPhysics();
+  if(finished || !hasGrabbed) return;
+  if(vibrationActive) return; // frozen until the bolt is tightened
+  const {idx, dist} = nearestAhead();
+  lastDist = dist;
+  if(idx > currentIndex && dist < CAPTURE_RADIUS){
+    const steps = idx-currentIndex;
+    for(let i=currentIndex+1;i<=idx;i++) deviations.push(dist);
+    currentIndex = idx;
+    spawnDust(BLADE_FIXED.x, BLADE_FIXED.y);
+    dustAmount = Math.min(1, dustAmount + steps*0.014);
+  }
+  if(nextVibrationIdx < VIBRATION_TRIGGERS.length && currentIndex/(path.length-1) >= VIBRATION_TRIGGERS[nextVibrationIdx]){
+    nextVibrationIdx++;
+    startVibration();
+  }
+  if(blowPuff > 0) blowPuff -= 0.05;
+
+  const hint = document.getElementById('blowHint');
+  if(hint){
+    if(!dustBlowerOwned && dustAmount > 0.35) hint.classList.remove('hide');
+    else hint.classList.add('hide');
+  }
+  if(dustBlowerOwned && dustAmount > 0){
+    dustAmount = Math.max(0, dustAmount - 0.004);
+  }
+  particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.life-=0.02; });
+  particles = particles.filter(p=>p.life>0);
+
+  const progress = currentIndex/(path.length-1);
+  document.getElementById('progressFill').style.width = (progress*100).toFixed(1)+'%';
+
+  if(deviations.length){
+    const avg = deviations.reduce((a,b)=>a+b,0)/deviations.length;
+    const acc = Math.max(0, 100 - (avg/CAPTURE_RADIUS)*100);
+    document.getElementById('hudAcc').textContent = Math.round(acc)+'%';
+  }
+  if(startTime !== null){
+    const t = (performance.now()-startTime)/1000;
+    document.getElementById('hudTime').textContent = t.toFixed(1)+'s';
+  }
+
+  if(currentIndex >= path.length-2 && !finished){
+    finished = true;
+    const avg = deviations.length ? deviations.reduce((a,b)=>a+b,0)/deviations.length : 0;
+    const acc = Math.max(0, 100 - (avg/CAPTURE_RADIUS)*100);
+    const t = startTime !== null ? (performance.now()-startTime)/1000 : 0;
+    const score = Math.round(acc*10 + Math.max(0, 90-t)*4);
+    document.getElementById('finalTime').textContent = t.toFixed(1)+'s';
+    document.getElementById('finalAcc').textContent = Math.round(acc)+'%';
+    document.getElementById('finalScore').textContent = score;
+
+    points++;
+    document.getElementById('hudPoints').textContent = points+'♦';
+    updateBuyBtn();
+    setTimeout(()=> document.getElementById('overlay').classList.add('show'), 500);
+  }
+}
+
+// ---------- Rendering ----------
+function drawSawBase(){
+  // brushed grey metal table, like the real saw's base plate
+  const g = ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0, '#c7cbce');
+  g.addColorStop(0.5, '#aeb3b7');
+  g.addColorStop(1, '#9a9fa3');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // circular brushed-metal swirl marks
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = '#7d8286';
+  for(let i=0;i<10;i++){
+    ctx.beginPath();
+    ctx.arc(W*0.42, H*0.46, 40+i*34, 0, Math.PI*2);
+    ctx.lineWidth = 1 + (i%3===0 ? 0.6:0);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // faint directional brushing
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = '#ffffff';
+  for(let i=0;i<24;i++){
+    ctx.beginPath();
+    const y0 = -10 + i*24;
+    ctx.moveTo(-10,y0);
+    ctx.lineTo(W+10, y0+8);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // mounting screw holes, like on the real table
+  ctx.fillStyle = '#5f6366';
+  const holes = [[60,50],[W-60,46],[W-70,H-40],[80,H-90],[W-40,H*0.5]];
+  holes.forEach(([x,y])=>{
+    ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
+  });
+
+  // subtle vignette so the paper pops in the middle
+  const vg = ctx.createRadialGradient(W/2,H/2,H*0.25, W/2,H/2,H*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,0.14)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0,0,W,H);
+}
+
+function drawPaper(){
+  ctx.save();
+  ctx.translate(paperCurrent.x, paperCurrent.y);
+  ctx.rotate(tilt);
+
+  // shadow
+  ctx.save();
+  ctx.translate(6,10);
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  roundRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H, 10);
+  ctx.fill();
+  ctx.restore();
+
+  // paper sheet
+  ctx.fillStyle = '#F6F1E6';
+  ctx.strokeStyle = '#d8cdb4';
+  ctx.lineWidth = 1.5;
+  roundRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H, 10);
+  ctx.fill(); ctx.stroke();
+
+  // guide (dashed, uncut)
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = 'rgba(40,30,20,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  path.forEach((p,i)=> i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  // cut portion (solid kerf)
+  if(currentIndex > 0){
+    ctx.save();
+    ctx.strokeStyle = '#1c130c';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for(let i=1;i<=currentIndex;i++) ctx.lineTo(path[i].x, path[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // start marker
+  ctx.fillStyle = '#4caf50';
+  ctx.beginPath(); ctx.arc(path[0].x, path[0].y, 6, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#1b1410'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // goal marker (flag)
+  const g = path[path.length-1];
+  ctx.strokeStyle = '#241a12'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y-16); ctx.stroke();
+  ctx.fillStyle = finished ? '#4caf50' : '#B23A2E';
+  ctx.beginPath();
+  ctx.moveTo(g.x, g.y-16); ctx.lineTo(g.x+11, g.y-12); ctx.lineTo(g.x, g.y-8);
+  ctx.closePath(); ctx.fill();
+
+  // sawdust building up on the piece as it's cut
+  if(dustAmount > 0){
+    const revealCount = Math.floor(dustAmount * DUST_FIELD.length);
+    ctx.save();
+    ctx.fillStyle = '#c8b28c';
+    ctx.globalAlpha = Math.min(0.93, dustAmount*0.93);
+    ctx.fillRect(-PAPER_W/2, -PAPER_H/2, PAPER_W, PAPER_H);
+    for(let i=0;i<revealCount;i++){
+      const d = DUST_FIELD[i];
+      ctx.globalAlpha = d.a * Math.min(1, dustAmount*1.3);
+      ctx.fillStyle = '#8a7455';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawDust(){
+  particles.forEach(p=>{
+    ctx.fillStyle = `rgba(214,158,94,${p.life})`;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+function drawBladeArm(){
+  jitterSeed += 0.5;
+  const jitterAmp = vibrationActive ? 6 : 0.5;
+  const jx = Math.sin(jitterSeed*4)*jitterAmp;
+  const bx = BLADE_FIXED.x + jx, by = BLADE_FIXED.y;
+  const offTrack = hasGrabbed && !finished && lastDist > CAPTURE_RADIUS;
+  ctx.save();
+  if(offTrack){
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ff4d3d';
+    ctx.beginPath();
+    ctx.arc(bx, by+2, 15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // mechanical arm from the top of the frame down to the blade
+  ctx.strokeStyle = '#3a3d40';
+  ctx.lineWidth = 10;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(bx-4, -10);
+  ctx.lineTo(bx-4, by-70);
+  ctx.stroke();
+  ctx.fillStyle = '#2b2d30';
+  ctx.beginPath();
+  ctx.ellipse(bx-4, by-70, 15, 12, 0, 0, Math.PI*2);
+  ctx.fill();
+  // clamp arm
+  ctx.strokeStyle = '#8B9099';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx-4, by-70);
+  ctx.lineTo(bx, by-16);
+  ctx.stroke();
+  // red clamp
+  ctx.fillStyle = '#B23A2E';
+  ctx.strokeStyle = '#241a12'; ctx.lineWidth = 1.5;
+  ctx.fillRect(bx-7, by-16, 14, 22);
+  ctx.strokeRect(bx-7, by-16, 14, 22);
+  // needle tip
+  ctx.strokeStyle = '#e8e8e8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx, by+6); ctx.lineTo(bx, by+16);
+  ctx.stroke();
+  ctx.restore();
+
+  if(dustBlowerOwned) drawAirBlower(bx, by);
+}
+
+function drawAirBlower(bx, by){
+  // flexible segmented hose arm coming in from the upper-left, ending in the
+  // orange nozzle — same rig as the real saw photos, aimed at the cut point.
+  const tipX = bx - 46, tipY = by - 6;
+  const segments = 9;
+  // anchored to the saw's arm joint (same pivot as the mechanical arm),
+  // not floating free in space
+  const startX = bx-4, startY = by-70;
+
+  // small mounting clamp where the hose bolts onto the saw's arm
+  ctx.save();
+  ctx.fillStyle = '#1c1e20';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(startX, startY, 8, 7, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  for(let i=0;i<segments;i++){
+    const t0 = i/segments, t1 = (i+1)/segments;
+    const x0 = startX + (tipX-startX)*t0, y0 = startY + (tipY-startY)*t0 + Math.sin(t0*Math.PI)*-18;
+    const x1 = startX + (tipX-startX)*t1, y1 = startY + (tipY-startY)*t1 + Math.sin(t1*Math.PI)*-18;
+    ctx.strokeStyle = i%2===0 ? '#2b2d30' : '#3a3d40';
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(x1,y1);
+    ctx.stroke();
+  }
+
+  // orange nozzle tip
+  ctx.save();
+  ctx.translate(tipX, tipY);
+  ctx.rotate(0.55);
+  ctx.fillStyle = '#FF6B1A';
+  ctx.beginPath();
+  ctx.moveTo(-9,-7);
+  ctx.lineTo(9,-3);
+  ctx.lineTo(9,3);
+  ctx.lineTo(-9,7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // a faint puff of air, breathing gently to show it's live
+  const puff = 0.5 + 0.5*Math.sin(jitterSeed*0.6);
+  ctx.strokeStyle = `rgba(255,255,255,${0.10+0.10*puff})`;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(tipX+6, tipY+2);
+  ctx.lineTo(tipX+22+6*puff, tipY+8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function loop(){
+  update();
+  ctx.clearRect(0,0,W,H);
+  drawSawBase();
+  drawPaper();
+  drawDust();
+  drawBladeArm();
+  requestAnimationFrame(loop);
+}
+loop();
+
+document.getElementById('retryBtn').addEventListener('click', resetGame);
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  alert('The finished-owl reveal (all 4 pieces together) comes next 🦉');
+});
+
+function blowDust(){
+  if(dustAmount <= 0 || finished) return;
+  blowPuff = 1;
+  // a burst of dust particles flying off to the side, like the air nozzle
+  for(let k=0;k<26;k++){
+    particles.push({
+      x: BLADE_FIXED.x - 60 + Math.random()*30,
+      y: BLADE_FIXED.y + (Math.random()-0.5)*160,
+      vx: 4+Math.random()*5,
+      vy: (Math.random()-0.5)*2,
+      life: 1,
+      r: 1.5+Math.random()*3
+    });
+  }
+  const start = dustAmount;
+  const t0 = performance.now();
+  (function anim(){
+    const t = Math.min(1, (performance.now()-t0)/450);
+    dustAmount = start*(1-t);
+    if(t < 1) requestAnimationFrame(anim);
+  })();
+}
+function updateBuyBtn(){
+  const btn = document.getElementById('buyBtn');
+  if(dustBlowerOwned){
+    btn.innerHTML = '<span class="buy-title">✅ DUST BLOWER</span><span class="buy-sub">ACTIVE</span>';
+    btn.classList.remove('affordable');
+    btn.classList.add('owned');
+  } else if(points >= DUST_BLOWER_COST){
+    btn.innerHTML = '<span class="buy-title">🛒 DUST BLOWER</span><span class="buy-sub">'+points+'/'+DUST_BLOWER_COST+'</span>';
+    btn.classList.add('affordable');
+  } else {
+    btn.innerHTML = '<span class="buy-title">🛒 DUST BLOWER</span><span class="buy-sub">'+points+'/'+DUST_BLOWER_COST+'</span>';
+    btn.classList.remove('affordable');
+  }
+}
+updateBuyBtn();
+
+document.getElementById('buyBtn').addEventListener('click', ()=>{
+  if(dustBlowerOwned || points < DUST_BLOWER_COST) return;
+  points -= DUST_BLOWER_COST;
+  dustBlowerOwned = true;
+  dustAmount = 0;
+  document.getElementById('hudPoints').textContent = points+'♦';
+  updateBuyBtn();
+});
+
+document.getElementById('blowBtn').addEventListener('click', blowDust);
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ e.preventDefault(); blowDust(); }
+});
+</script>
+</body>
+</html>
