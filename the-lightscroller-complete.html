@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scroll Saw Simulator — The Lightscroller</title>
+<style>
+  :root{
+    --danger-red:#ff3d1a;
+    --paper:#F3EBDC;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:#0a0a0b;
+    font-family:'Segoe UI', system-ui, sans-serif;
+    color:var(--paper);
+    overflow-x:hidden;
+  }
+  #stage{
+    position:relative;
+    width:100%; min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center;
+    padding:36px 20px 60px;
+    background:
+      radial-gradient(ellipse at 50% -10%, #3a1410 0%, transparent 55%),
+      linear-gradient(180deg, #17100e 0%, #0a0808 100%);
+  }
+  .eyebrow{
+    font-family:'Courier New', monospace;
+    letter-spacing:3px;
+    font-size:12px;
+    color:var(--danger-red);
+    text-transform:uppercase;
+    opacity:0;
+    animation: fadeUp .6s ease forwards;
+  }
+  h1{
+    font-family:'Courier New', monospace;
+    font-size:clamp(32px, 6.5vw, 52px);
+    font-weight:900;
+    letter-spacing:4px;
+    margin:8px 0 4px 0;
+    color:#fff4e2;
+    text-align:center;
+    text-shadow:0 0 10px rgba(255,200,120,.8), 0 0 30px rgba(255,140,40,.5), 0 0 60px rgba(255,90,20,.3);
+    opacity:0;
+    animation: fadeUp .6s ease .15s forwards;
+  }
+  .warncry{
+    font-family:'Courier New', monospace;
+    font-weight:800;
+    font-size:clamp(18px, 3.6vw, 26px);
+    letter-spacing:1.5px;
+    color:var(--danger-red);
+    text-shadow:0 0 10px rgba(255,61,26,.9), 0 0 26px rgba(255,61,26,.5);
+    margin:0 0 30px 0;
+    text-align:center;
+    opacity:0;
+    animation: fadeUp .6s ease .3s forwards, flicker 1.8s ease-in-out 1.1s infinite;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes flicker{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.75; }
+  }
+
+  #canvasWrap{
+    position:relative;
+    box-shadow:0 24px 70px rgba(0,0,0,.75), 0 0 60px rgba(255,140,40,.25);
+    border-radius:4px;
+    padding:24px;
+    background:linear-gradient(155deg, #201415 0%, #0f0a0a 55%, #1c1112 100%);
+    border:1px solid #4a2016;
+    overflow:hidden;
+    opacity:0;
+    animation: fadeUp .7s ease .45s forwards, shake .5s ease 1.1s, pulseGlow 2.6s ease-in-out 1.6s infinite;
+  }
+  @keyframes shake{
+    0%,100%{ transform:translate(0,0); }
+    20%{ transform:translate(-4px,2px); }
+    40%{ transform:translate(4px,-2px); }
+    60%{ transform:translate(-3px,1px); }
+    80%{ transform:translate(3px,-1px); }
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 24px 70px rgba(0,0,0,.75), 0 0 60px rgba(255,140,40,.25); }
+    50%{ box-shadow:0 24px 70px rgba(0,0,0,.75), 0 0 100px rgba(255,150,50,.5); }
+  }
+  #flash{
+    position:fixed; inset:0; z-index:60;
+    background:radial-gradient(circle at 50% 45%, rgba(255,235,190,0.9), rgba(255,235,190,0) 60%);
+    pointer-events:none;
+    opacity:0;
+    animation: flashPop 0.7s ease 1.05s forwards;
+  }
+  @keyframes flashPop{
+    0%{ opacity:0; }
+    12%{ opacity:1; }
+    100%{ opacity:0; }
+  }
+  #canvasWrap::before{
+    content:'';
+    position:absolute; inset:14px;
+    border:1px solid rgba(255,80,40,0.08);
+    pointer-events:none;
+  }
+  canvas{ display:block; background:#4c5257; box-shadow: inset 0 0 40px rgba(0,0,0,.4); }
+
+  #embers{
+    position:fixed; inset:0;
+    width:100vw; height:100vh;
+    pointer-events:none;
+    z-index:50;
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+
+  .stagelist{
+    display:flex; flex-wrap:wrap; justify-content:center;
+    gap:22px 28px;
+    max-width:520px;
+    margin-top:26px;
+    font-family:'Courier New', monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    color:#a08070;
+    opacity:0;
+    animation: fadeUp .6s ease 1.4s forwards;
+  }
+  .stagelist b{ color:var(--paper); display:block; font-size:13px; margin-bottom:2px; }
+  .stagelist .stagebox{ text-align:center; }
+
+  .btnrow{
+    margin-top:34px;
+    display:flex; gap:14px;
+    opacity:0;
+    animation: fadeUp .6s ease 1.6s forwards;
+  }
+  button{
+    font-family:'Courier New', monospace;
+    font-weight:700; letter-spacing:1px;
+    padding:12px 22px; border-radius:6px; border:none;
+    cursor:pointer; font-size:12px;
+  }
+  .btn-primary{ background:var(--danger-red); color:#1a0503; }
+  .btn-ghost{ background:transparent; color:#a08070; border:1px solid #3a1a16; }
+</style>
+</head>
+<body>
+<canvas id="embers"></canvas>
+<div id="flash"></div>
+<div id="stage">
+  <div class="eyebrow">Scroll Saw Simulator</div>
+  <h1>THE LIGHTSCROLLER</h1>
+  <p class="warncry">"You shouldn't have done that!"</p>
+
+  <div id="canvasWrap">
+    <canvas id="art" width="320" height="680"></canvas>
+  </div>
+
+  <div class="stagelist">
+    <div class="stagebox"><b>Cut 1</b>Handle</div>
+    <div class="stagebox"><b>Cut 2</b>Crossguard</div>
+    <div class="stagebox"><b>Cut 3</b>Blade</div>
+  </div>
+
+  <div class="btnrow">
+    <button class="btn-primary" id="nextPicBtn">FACE THE DOOMSCROLLER</button>
+    <button class="btn-ghost" id="galleryBtn">SAVE TO GALLERY</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('art');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+</script>
+<script id="ptdata" type="application/json">{"handle":[[673.0,368.0],[669.3,369.0],[665.43,369.57],[661.9,371.0],[658.21,372.0],[654.09,372.0],[651.16,374.84],[647.66,376.34],[644.46,378.54],[641.26,380.74],[638.35,383.65],[635.45,386.55],[633.0,389.65],[631.04,392.96],[629.0,396.22],[627.0,399.5],[626.0,403.2],[625.0,406.9],[624.0,410.6],[623.0,414.3],[622.0,418.0],[622.0,422.11],[622.0,426.22],[622.0,430.33],[623.0,434.03],[624.52,437.52],[625.0,441.43],[626.09,445.09],[628.0,448.41],[629.08,452.08],[631.28,455.28],[633.48,458.48],[636.39,461.39],[639.3,464.3],[642.2,467.2],[645.41,469.41],[648.61,471.61],[651.0,474.73],[652.0,478.43],[652.0,482.54],[652.0,486.65],[652.0,490.76],[652.0,494.88],[652.0,498.99],[652.0,503.1],[652.0,507.21],[652.0,511.33],[652.0,515.44],[652.0,519.55],[652.0,523.66],[652.0,527.78],[651.37,531.63],[649.0,534.76],[648.0,538.46],[648.0,542.57],[648.0,546.68],[648.0,550.8],[648.0,554.91],[648.0,559.02],[648.0,563.13],[648.0,567.25],[648.0,571.36],[648.0,575.47],[648.0,579.58],[648.0,583.7],[648.0,587.81],[648.0,591.92],[648.0,596.03],[648.0,600.15],[648.0,604.26],[648.0,608.37],[648.0,612.48],[648.0,616.6],[648.0,620.71],[648.0,624.82],[648.0,628.93],[648.0,633.05],[648.0,637.16],[648.0,641.27],[648.0,645.38],[648.0,649.5],[648.0,653.61],[647.0,657.31],[647.0,661.42],[647.0,665.53],[647.0,669.65],[647.54,673.54],[650.03,676.03],[653.74,677.0],[657.6,677.6],[661.14,679.0],[664.84,680.0],[668.53,681.0],[672.46,681.46],[675.66,683.66],[679.45,684.45],[682.65,686.65],[686.2,688.0],[689.63,689.63],[692.77,692.0],[696.62,692.62],[699.75,695.0],[702.73,697.73],[705.93,699.93],[710.01,699.99],[711.0,696.29],[710.42,692.42],[710.0,688.48],[710.0,684.36],[709.47,680.47],[709.0,676.55],[708.6,672.6],[708.0,668.74],[708.0,664.63],[708.0,660.52],[708.0,656.4],[708.0,652.29],[708.0,648.18],[708.0,644.07],[708.0,639.95],[708.0,635.84],[708.0,631.73],[708.0,627.62],[708.0,623.5],[708.0,619.39],[707.0,615.69],[706.0,611.99],[706.0,607.88],[706.0,603.77],[706.0,599.66],[706.0,595.54],[706.0,591.43],[707.0,587.73],[707.0,583.62],[707.0,579.51],[707.0,575.39],[707.0,571.28],[707.0,567.17],[706.33,563.33],[704.84,559.84],[703.0,556.49],[703.0,552.38],[703.0,548.26],[703.0,544.15],[703.0,540.04],[703.0,535.93],[703.13,531.87],[704.0,528.11],[704.0,524.0],[704.0,519.89],[704.0,515.78],[704.0,511.66],[704.0,507.55],[704.0,503.44],[703.0,499.74],[703.0,495.63],[703.0,491.52],[703.0,487.4],[703.0,483.29],[703.0,479.18],[703.66,475.34],[706.57,472.43],[709.77,470.23],[712.97,468.03],[715.88,465.12],[718.11,462.0],[720.57,459.43],[723.07,456.93],[725.27,453.73],[727.0,450.34],[728.96,447.04],[730.46,443.54],[731.0,439.65],[732.0,435.96],[733.0,432.26],[733.6,428.4],[734.0,424.45],[734.0,420.33],[733.0,416.64],[732.0,412.94],[731.17,409.17],[731.0,405.13],[729.6,401.6],[727.39,398.39],[726.0,394.86],[724.0,392.16],[721.91,388.91],[719.01,386.01],[716.1,383.1],[713.19,380.19],[709.98,378.0],[706.7,376.0],[703.29,374.29],[700.09,372.09],[696.02,372.0],[692.32,371.0],[689.03,369.03],[685.24,368.24],[681.23,368.0],[677.11,368.0]],"guard":[[649.0,696.0],[647.0,700.66],[647.0,706.15],[647.0,711.63],[645.5,716.5],[645.0,721.78],[644.0,726.86],[643.0,731.93],[641.0,736.59],[639.0,741.25],[637.0,745.91],[634.43,750.0],[629.77,752.0],[624.7,753.0],[619.63,754.0],[614.14,754.0],[609.07,755.0],[604.41,757.0],[599.33,758.0],[594.26,759.0],[589.6,761.0],[584.53,762.0],[579.61,763.39],[575.21,766.0],[570.55,768.0],[565.89,770.0],[561.46,772.54],[556.7,774.3],[552.23,776.77],[547.47,778.53],[543.01,781.0],[539.35,784.0],[534.78,786.22],[530.44,789.0],[526.2,792.0],[521.97,795.03],[517.79,798.21],[513.62,801.38],[509.45,804.55],[504.97,807.0],[500.22,805.22],[495.65,803.0],[491.0,801.0],[485.92,800.0],[480.43,800.0],[474.96,800.04],[469.91,801.09],[465.74,804.26],[461.27,806.73],[457.39,810.61],[454.22,814.78],[453.0,819.77],[452.0,824.84],[450.0,829.5],[451.0,834.57],[453.0,839.23],[454.92,843.92],[457.39,848.39],[460.8,852.0],[464.74,855.74],[469.2,858.2],[473.95,860.0],[479.43,860.0],[484.92,860.0],[490.29,859.71],[494.76,857.24],[499.31,855.0],[503.39,851.61],[506.57,847.43],[509.0,842.95],[510.79,838.21],[513.0,833.63],[513.0,828.15],[516.07,823.93],[520.24,820.76],[524.59,818.0],[529.18,815.82],[533.49,813.0],[537.4,810.6],[541.87,808.13],[546.47,806.0],[551.09,803.91],[555.79,802.0],[560.32,799.68],[565.37,798.63],[569.84,796.16],[574.84,795.0],[579.65,793.35],[584.41,791.59],[589.46,790.54],[593.92,788.08],[598.98,787.02],[604.45,787.0],[608.79,784.21],[613.77,783.0],[619.26,783.0],[624.33,782.0],[628.99,780.0],[634.48,780.0],[639.56,779.0],[645.04,779.0],[650.12,778.0],[655.19,777.0],[660.68,777.0],[666.17,777.0],[671.24,776.0],[676.73,776.0],[682.21,776.0],[687.7,776.0],[692.78,777.0],[698.26,777.0],[703.75,777.0],[708.58,778.58],[713.9,779.0],[719.39,779.0],[724.46,780.0],[729.08,782.08],[734.19,783.0],[739.68,783.0],[745.12,783.12],[749.41,786.0],[754.49,787.0],[759.56,788.0],[764.22,790.0],[769.29,791.0],[774.26,792.26],[779.02,794.02],[784.07,795.07],[788.34,798.0],[793.42,799.0],[798.05,801.05],[802.74,803.0],[807.4,805.0],[812.05,807.0],[816.5,809.5],[821.26,811.26],[825.62,814.0],[830.2,816.2],[834.37,819.37],[838.54,822.54],[842.42,826.42],[843.0,831.67],[845.0,836.33],[846.0,841.41],[848.05,846.05],[851.0,850.31],[854.69,853.69],[858.63,856.0],[862.91,858.91],[867.95,860.0],[873.43,860.0],[878.92,860.0],[884.0,859.0],[888.46,856.54],[892.22,853.78],[896.4,850.6],[900.0,846.61],[902.74,842.26],[903.09,836.91],[904.0,831.8],[904.0,826.32],[903.0,821.24],[902.12,816.12],[898.95,811.95],[895.07,808.07],[890.85,805.0],[886.72,801.72],[881.67,800.67],[876.46,800.0],[870.97,800.0],[865.89,801.0],[861.46,803.54],[856.99,806.01],[852.33,808.0],[848.67,805.0],[844.01,803.01],[839.84,799.84],[836.37,796.37],[832.2,793.2],[827.73,790.73],[823.37,788.0],[819.13,785.0],[814.92,781.92],[810.22,780.0],[805.98,777.0],[801.23,775.23],[796.66,773.0],[792.29,770.29],[787.53,768.53],[783.07,766.07],[778.02,765.0],[773.78,762.0],[768.5,761.5],[764.04,759.0],[758.97,758.0],[753.9,757.0],[748.88,755.88],[744.16,754.0],[738.68,754.0],[733.6,753.0],[728.37,752.37],[723.62,750.62],[720.0,747.21],[718.39,742.39],[716.0,737.89],[713.0,733.65],[710.28,729.28],[707.11,725.11],[703.94,720.94],[699.76,717.76],[695.88,713.88],[691.18,712.0],[686.95,708.95],[682.49,706.49],[678.61,704.0],[673.95,702.0],[669.21,700.21],[664.45,698.45],[659.56,697.0],[654.49,696.0]],"blade":[[622.0,801.0],[608.23,805.0],[594.33,808.67],[596.75,819.75],[605.53,831.53],[610.0,845.1],[613.0,859.29],[614.0,874.29],[614.0,889.72],[614.0,905.14],[614.0,920.56],[614.0,935.99],[614.0,951.41],[614.0,966.83],[614.0,982.26],[614.0,997.68],[614.0,1013.1],[614.0,1028.53],[614.0,1043.95],[614.0,1059.37],[614.0,1074.8],[614.0,1090.22],[614.0,1105.64],[615.0,1120.65],[616.0,1135.66],[616.0,1151.09],[616.0,1166.51],[616.0,1181.93],[617.0,1196.94],[617.0,1212.36],[617.0,1227.79],[617.0,1243.21],[617.0,1257.81],[618.0,1272.82],[618.0,1288.24],[618.0,1303.66],[618.0,1319.09],[618.0,1334.51],[618.0,1349.93],[618.0,1365.36],[619.0,1380.36],[620.0,1395.37],[620.0,1410.8],[622.0,1425.39],[622.0,1440.81],[622.0,1456.24],[623.0,1471.25],[624.0,1486.26],[625.0,1501.27],[626.0,1516.27],[627.0,1531.28],[628.0,1546.29],[629.0,1561.3],[630.0,1576.31],[632.0,1590.91],[633.0,1605.92],[634.0,1620.92],[637.0,1635.1],[638.0,1650.11],[640.0,1664.71],[642.92,1678.92],[644.64,1693.64],[648.0,1707.67],[648.77,1722.77],[652.0,1736.85],[655.03,1751.03],[658.0,1765.22],[661.0,1779.4],[664.0,1793.58],[667.0,1807.76],[671.0,1821.52],[674.5,1835.5],[680.45,1839.55],[685.0,1826.0],[688.83,1812.17],[691.25,1797.75],[693.0,1783.05],[697.0,1769.28],[700.0,1755.1],[702.35,1740.65],[705.0,1726.33],[708.0,1712.14],[710.32,1697.68],[712.0,1682.95],[716.0,1669.19],[716.17,1653.83],[719.0,1639.58],[720.0,1624.58],[723.0,1610.39],[724.0,1595.39],[725.0,1580.38],[727.0,1565.78],[727.0,1550.36],[729.87,1536.13],[731.0,1521.17],[731.0,1505.75],[731.0,1490.32],[732.0,1475.31],[732.08,1459.92],[733.0,1444.88],[734.0,1429.87],[735.0,1414.86],[735.0,1399.44],[735.0,1384.02],[735.0,1368.59],[736.0,1353.58],[736.0,1338.16],[737.0,1323.15],[737.0,1307.73],[738.0,1292.72],[738.0,1277.29],[738.0,1261.87],[739.0,1246.86],[739.0,1231.44],[739.0,1216.02],[739.0,1200.59],[739.0,1185.17],[739.0,1169.75],[740.0,1154.74],[740.0,1139.31],[740.0,1123.89],[740.0,1108.47],[741.0,1093.46],[741.0,1078.03],[741.0,1062.61],[741.0,1047.19],[741.0,1031.76],[741.0,1016.34],[742.0,1001.33],[742.0,985.91],[742.0,970.49],[742.0,955.06],[742.0,939.64],[742.0,924.22],[742.0,908.79],[742.45,893.55],[743.0,878.36],[743.0,862.94],[745.0,848.34],[748.59,834.41],[755.26,821.74],[762.96,810.96],[750.0,805.0],[735.41,803.0],[722.63,807.37],[712.13,817.87],[704.06,829.94],[698.1,842.9],[694.97,857.03],[691.84,871.16],[691.0,886.23],[690.0,901.24],[689.0,916.25],[687.0,930.84],[687.0,946.27],[686.0,961.27],[687.0,976.28],[687.0,991.71],[687.0,1007.13],[687.0,1022.55],[687.0,1037.98],[687.0,1053.4],[687.0,1068.82],[687.0,1084.25],[687.0,1099.67],[687.0,1115.09],[687.0,1130.52],[687.0,1145.94],[686.0,1160.95],[687.0,1175.96],[687.0,1191.38],[687.0,1206.8],[687.0,1222.23],[687.0,1237.65],[687.0,1253.07],[687.0,1268.5],[687.0,1283.92],[687.0,1299.34],[687.0,1314.77],[687.0,1330.19],[687.0,1345.61],[687.0,1361.04],[687.0,1376.46],[687.0,1391.88],[686.0,1406.89],[686.0,1422.32],[686.52,1437.52],[686.0,1451.51],[687.0,1466.52],[687.0,1481.94],[687.0,1497.36],[687.0,1512.79],[686.0,1527.8],[686.0,1543.22],[686.0,1558.64],[686.0,1573.24],[686.0,1588.66],[686.0,1604.08],[684.93,1619.07],[683.0,1633.69],[682.0,1648.7],[681.21,1663.79],[674.0,1666.36],[673.0,1651.35],[673.0,1635.92],[670.0,1621.74],[670.0,1606.32],[669.0,1591.31],[669.0,1575.89],[669.0,1560.46],[668.0,1545.46],[668.0,1530.03],[668.0,1514.61],[668.0,1499.19],[668.0,1483.76],[668.0,1468.34],[668.0,1452.92],[668.0,1438.32],[668.0,1422.9],[668.0,1407.47],[668.0,1392.05],[668.0,1376.63],[668.0,1361.2],[668.0,1345.78],[668.0,1330.36],[668.0,1314.93],[668.0,1299.51],[668.0,1284.09],[668.0,1268.66],[668.0,1253.24],[668.0,1237.82],[668.0,1222.39],[668.0,1206.97],[668.0,1191.55],[668.0,1176.12],[668.0,1161.53],[668.0,1146.93],[668.0,1131.51],[668.0,1116.92],[668.0,1102.32],[668.0,1086.9],[668.0,1071.47],[668.0,1056.05],[668.0,1040.63],[668.0,1025.2],[668.0,1009.78],[668.0,994.36],[668.0,978.93],[668.0,963.51],[668.0,948.09],[667.0,933.08],[666.05,918.05],[666.0,902.65],[665.0,887.64],[663.0,873.04],[662.0,858.03],[658.0,844.27],[652.23,831.23],[644.16,819.16],[634.08,809.08]]}</script>
+<script>
+const swordData = JSON.parse(document.getElementById('ptdata').textContent);
+// Pieces are already in ONE shared coordinate frame (from the original photo),
+// so we scale them all together instead of independently — this is what makes
+// them reassemble into the correct sword instead of just decoratively stacking.
+const pieceOrder = ['blade','guard','handle']; // draw order: blade first, handle on top
+const allPts = pieceOrder.flatMap(k => swordData[k]);
+const xs = allPts.map(p=>p[0]), ys = allPts.map(p=>p[1]);
+const minx=Math.min(...xs), maxx=Math.max(...xs);
+const miny=Math.min(...ys), maxy=Math.max(...ys);
+const ocx=(minx+maxx)/2, ocy=(miny+maxy)/2;
+const ownSize = Math.max(maxx-minx, maxy-miny);
+const DISPLAY_SIZE = 600; // final on-canvas size, in px, for the whole sword — bigger, more dominant
+</script>
+<script>
+
+function drawMetalPanel(){
+  const g = ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0, '#889095');
+  g.addColorStop(0.45, '#5c6469');
+  g.addColorStop(0.55, '#454b4f');
+  g.addColorStop(1, '#2a2e31');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // fine cast-metal grain — dark specks only, no light/white dots
+  ctx.save();
+  let seed = 5;
+  const rand = () => { seed = (seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<500;i++){
+    const x = rand()*W, y = rand()*H;
+    ctx.fillStyle = `rgba(0,0,0,${0.04+rand()*0.07})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 0.5+rand()*1.3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // soft golden spotlight behind the sword — this is a special item, not a dark warning
+  const glow = ctx.createRadialGradient(W/2,H*0.42,H*0.06, W/2,H*0.42,H*0.6);
+  glow.addColorStop(0,'rgba(255,224,160,0.42)');
+  glow.addColorStop(0.5,'rgba(255,160,70,0.14)');
+  glow.addColorStop(1,'rgba(255,160,70,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,W,H);
+
+  // sunburst rays radiating from behind the sword — the "legendary item" treatment
+  ctx.save();
+  const cx0 = W/2, cy0 = H*0.42;
+  const rayLen = H*0.85;
+  const rayCount = 16;
+  for(let i=0;i<rayCount;i++){
+    const a0 = (i/rayCount)*Math.PI*2;
+    const width = 0.10 + (i%2===0 ? 0.05 : 0);
+    ctx.save();
+    ctx.translate(cx0, cy0);
+    ctx.rotate(a0);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(-rayLen*Math.sin(width), rayLen*Math.cos(width));
+    ctx.lineTo(rayLen*Math.sin(width), rayLen*Math.cos(width));
+    ctx.closePath();
+    const rg = ctx.createLinearGradient(0,0,0,rayLen);
+    rg.addColorStop(0, i%2===0 ? 'rgba(255,210,140,0.16)' : 'rgba(255,210,140,0.07)');
+    rg.addColorStop(1, 'rgba(255,210,140,0)');
+    ctx.fillStyle = rg;
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // light vignette at the very edges only — keeps focus without going murky
+  const vg = ctx.createRadialGradient(W/2,H*0.4,H*0.45, W/2,H*0.4,H*0.9);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(20,5,0,0.28)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0,0,W,H);
+
+  // brighter, wider sheen — the polished-chrome look
+  ctx.save();
+  const sheen = ctx.createLinearGradient(-W*0.2, 0, W*1.1, H*0.6);
+  sheen.addColorStop(0.00, 'rgba(255,255,255,0)');
+  sheen.addColorStop(0.32, 'rgba(255,255,255,0)');
+  sheen.addColorStop(0.44, 'rgba(255,255,255,0.28)');
+  sheen.addColorStop(0.52, 'rgba(255,255,255,0.08)');
+  sheen.addColorStop(0.62, 'rgba(255,255,255,0)');
+  sheen.addColorStop(1.00, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+
+function drawPiece(pts, dx, dy, scale){
+  ctx.save();
+  const path = new Path2D();
+  pts.forEach((p,i)=> {
+    const x=(p[0]-ocx)*scale + dx, y=(p[1]-ocy)*scale + dy;
+    i===0 ? path.moveTo(x,y) : path.lineTo(x,y);
+  });
+  path.closePath();
+
+  // brighter gunmetal fill instead of near-black, so it reads as polished steel
+  const base = ctx.createLinearGradient(dx-scale*ownSize*0.3, dy-scale*ownSize*0.5, dx+scale*ownSize*0.2, dy+scale*ownSize*0.5);
+  base.addColorStop(0, '#3a3f43');
+  base.addColorStop(0.5, '#26292c');
+  base.addColorStop(1, '#1a1c1e');
+  ctx.fillStyle = base;
+  ctx.fill(path);
+
+  ctx.save();
+  ctx.clip(path);
+
+  // broad soft highlight
+  const hl = ctx.createLinearGradient(dx-scale*ownSize*0.3, dy-scale*ownSize*0.3, dx+scale*ownSize*0.2, dy+scale*ownSize*0.2);
+  hl.addColorStop(0, 'rgba(255,255,255,0.55)');
+  hl.addColorStop(0.32, 'rgba(255,255,255,0.14)');
+  hl.addColorStop(0.6, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hl;
+  ctx.fillRect(dx-scale*ownSize, dy-scale*ownSize, scale*ownSize*2, scale*ownSize*2);
+
+  // tight bright chrome streak for real shine, not just a glow
+  const streak = ctx.createLinearGradient(dx-scale*ownSize*0.15, dy-scale*ownSize*0.45, dx+scale*ownSize*0.05, dy+scale*ownSize*0.45);
+  streak.addColorStop(0.42, 'rgba(255,255,255,0)');
+  streak.addColorStop(0.5, 'rgba(255,255,255,0.85)');
+  streak.addColorStop(0.58, 'rgba(255,255,255,0)');
+  ctx.fillStyle = streak;
+  ctx.fillRect(dx-scale*ownSize, dy-scale*ownSize, scale*ownSize*2, scale*ownSize*2);
+
+  ctx.restore();
+
+  ctx.restore();
+}
+
+const drawScale = DISPLAY_SIZE / ownSize;
+const drawDx = W/2, drawDy = H/2;
+
+ctx.clearRect(0,0,W,H);
+drawMetalPanel();
+pieceOrder.forEach(key=>{
+  drawPiece(swordData[key], drawDx, drawDy, drawScale);
+});
+
+setTimeout(()=>{ if(!embersFired){ embersFired = true; startEmbers(); } }, 900);
+
+// ---------- Ember shower — sparks falling, not party confetti ----------
+let embersFired = false;
+const emberCanvas = document.getElementById('embers');
+const ectx = emberCanvas.getContext('2d');
+
+function startEmbers(){
+  emberCanvas.width = window.innerWidth;
+  emberCanvas.height = window.innerHeight;
+
+  const pieces = [];
+  for(let i=0;i<170;i++){
+    pieces.push({
+      x: Math.random()*emberCanvas.width,
+      y: -20 - Math.random()*emberCanvas.height*0.4,
+      r: 1.8+Math.random()*3.4,
+      vx: (Math.random()-0.5)*1.6,
+      vy: 1.8+Math.random()*2.8,
+      drift: Math.random()*Math.PI*2,
+      life: 1
+    });
+  }
+
+  const emberStart = performance.now();
+  function emberFrame(t){
+    const elapsed = (t-emberStart)/1000;
+    ectx.clearRect(0,0,emberCanvas.width,emberCanvas.height);
+    let anyAlive = false;
+    pieces.forEach(p=>{
+      p.drift += 0.05;
+      p.x += p.vx + Math.sin(p.drift)*0.5;
+      p.y += p.vy;
+      p.life -= 0.0035;
+      if(p.life > 0 && p.y < emberCanvas.height+20) anyAlive = true;
+      if(p.life <= 0) return;
+      ectx.save();
+      ectx.globalAlpha = p.life;
+      const g = ectx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*2.5);
+      g.addColorStop(0, 'rgba(255,240,210,1)');
+      g.addColorStop(0.4, 'rgba(255,150,50,0.9)');
+      g.addColorStop(1, 'rgba(255,60,20,0)');
+      ectx.fillStyle = g;
+      ectx.beginPath();
+      ectx.arc(p.x, p.y, p.r*2.5, 0, Math.PI*2);
+      ectx.fill();
+      ectx.restore();
+    });
+    if(anyAlive && elapsed < 6){
+      requestAnimationFrame(emberFrame);
+    } else {
+      ectx.clearRect(0,0,emberCanvas.width,emberCanvas.height);
+    }
+  }
+  requestAnimationFrame(emberFrame);
+}
+
+document.getElementById('nextPicBtn').addEventListener('click', ()=>{
+  alert('He is coming. 🔥');
+});
+document.getElementById('galleryBtn').addEventListener('click', ()=>{
+  alert('Gallery saving is a nice future feature — for now, screenshot away! 📸');
+});
+</script>
+</body>
+</html>
