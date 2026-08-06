@@ -415,10 +415,11 @@ const BACK_TOLERANCE = 3;
 // Wood barely heats up under a blade. Aluminum builds friction heat fast —
 // cut too quickly for too long and the blade overheats and needs to cool
 // before it can cut again. Blowing on it (same button as dust) speeds that up.
-const HEAT_RATE = 0.012;          // heat gained per path-point of cutting speed
-const HEAT_COOL_PASSIVE = 0.0018; // heat lost per frame, always, even while cutting
-const HEAT_COOL_BLOW = 0.16;      // extra heat lost per Blow press
-const OVERHEAT_RESUME_AT = 0.22;  // heat must drop back below this to resume cutting
+const HEAT_RATE = 0.02;           // heat gained per path-point of cutting speed (was 0.012 - builds faster)
+const HEAT_COOL_PASSIVE = 0.001;  // heat lost per frame, always, even while cutting (was 0.0018 - cools more slowly)
+const HEAT_COOL_BLOW = 0.12;      // extra heat lost per Blow press (was 0.16 - less generous)
+const OVERHEAT_TRIGGER_AT = 0.85; // heat that triggers overheat lockup (was a fixed 1.0 - narrower safe range)
+const OVERHEAT_RESUME_AT = 0.35;  // heat must drop back below this to resume cutting (was 0.22 - longer recovery)
 let heatAmount = 0;               // 0..1
 let overheating = false;
 
@@ -594,7 +595,7 @@ function update(){
     // Hot Blade: cutting fast through aluminum builds real friction heat.
     // Push it too far and the blade overheats — freezes cutting until it cools.
     heatAmount = Math.min(1, heatAmount + steps*HEAT_RATE);
-    if(!overheating && heatAmount >= 1){
+    if(!overheating && heatAmount >= OVERHEAT_TRIGGER_AT){
       overheating = true;
       document.getElementById('overheatPanel').classList.add('show');
       const wrap = document.getElementById('canvasWrap');

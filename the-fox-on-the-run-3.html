@@ -492,8 +492,8 @@ function update(){
     const prevIndex = currentIndex;
     for(let i=currentIndex+1;i<=idx;i++) deviations.push(dist);
     currentIndex = idx;
-    spawnDust(BLADE_FIXED.x, BLADE_FIXED.y);
-    dustAmount = Math.min(1, dustAmount + steps*0.007);
+    if(!dustBlowerOwned) spawnDust(BLADE_FIXED.x, BLADE_FIXED.y);
+    if(!dustBlowerOwned) dustAmount = Math.min(1, dustAmount + steps*0.007);
 
     // Wood knot: cutting through one too fast makes the blade catch — you
     // don't just lose the knot, you lose the whole approach and have to
@@ -501,7 +501,7 @@ function update(){
     const hitKnot = KNOT_ZONES.find(k => prevIndex < k.end && idx > k.start);
     if(hitKnot && steps > KNOT_MAX_SAFE_STEPS){
       currentIndex = Math.max(0, hitKnot.start - KNOT_WARN_LEAD);
-      dustAmount = Math.min(1, dustAmount + 0.12);
+      if(!dustBlowerOwned) dustAmount = Math.min(1, dustAmount + 0.12);
       for(let i=0;i<6;i++) deviations.push(CAPTURE_RADIUS*0.9);
       knotSnagUntil = performance.now() + 900;
       const wrap = document.getElementById('canvasWrap');

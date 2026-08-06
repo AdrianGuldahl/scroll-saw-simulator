@@ -442,6 +442,19 @@ canvas.addEventListener('mousemove', (e)=>{
   if(startTime === null && !finished) startTime = performance.now();
 });
 
+// While a mechanic panel (e.g. bolt tightening) is open, the mouse is often
+// over the panel/button rather than the canvas, so the canvas-only listener
+// above stops firing and the precision target goes stale. Keep tracking the
+// real cursor anywhere on the page during that freeze so cutting resumes
+// smoothly from the player's actual mouse position instead of snapping back
+// to wherever it was last on the canvas.
+document.addEventListener('mousemove', (e)=>{
+  if(!vibrationActive) return;
+  const r = canvas.getBoundingClientRect();
+  paperTarget.x = (e.clientX - r.left) * (W/r.width);
+  paperTarget.y = (e.clientY - r.top) * (H/r.height);
+});
+
 function transformPoint(local){
   const c = Math.cos(tilt), s = Math.sin(tilt);
   return {
