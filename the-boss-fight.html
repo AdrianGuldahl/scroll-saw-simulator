@@ -36,9 +36,10 @@
   header{
     width:100%; max-width:900px;
     padding:14px 20px 6px 20px;
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:center;
     gap:16px;
   }
+  header .title{ text-align:center; }
   .title{
     font-family:'Courier New', monospace;
     font-weight:800;
@@ -147,43 +148,304 @@
   #canvasWrap.shakeSmall{ animation: cineShakeSmall .35s linear; }
   #canvasWrap.shakeBig{ animation: cineShakeBig .5s ease-out; }
 
-  /* ---------- post-cinematic placeholder ---------- */
-  #bossPlaceholder{
-    position:absolute; inset:0;
-    z-index:10;
+  /* ---------- Boss fight, Stage 1 ---------- */
+  #bossFight{
+    position:relative;
     display:none;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
-    text-align:center;
-    gap:14px;
-    padding:40px;
+    gap:12px;
+    margin-top:14px;
+    padding:16px 18px;
+    box-sizing:border-box;
+    width:640px;
+    height:560px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    border-radius:10px;
+    border:6px solid #201812;
+    overflow:hidden;
     background:
-      radial-gradient(ellipse at 50% 30%, #3a1a12 0%, #120a07 70%);
+      linear-gradient(rgba(10,6,3,.35), rgba(10,6,3,.55)),
+      url('boss-workshop-bg.jpg');
+    background-size:cover;
+    background-position:center;
   }
-  #bossPlaceholder.show{ display:flex; }
-  #bossPlaceholder h1{
+  #bossFight.show{ display:flex; }
+  #doomscrollerArt{
+    position:absolute;
+    left:14px;
+    bottom:70px;
+    height:440px;
+    width:auto;
+    filter:drop-shadow(0 18px 20px rgba(0,0,0,.65)) drop-shadow(0 0 18px rgba(80,190,255,.15));
+    pointer-events:none;
+  }
+
+  #sawWrap{
+    position:absolute;
+    right:6px;
+    bottom:6px;
+    width:372px;
+    height:327px;
+    box-sizing:border-box;
+    border-radius:4px;
+    overflow:hidden;
+    background-image:url('saw-maintenance.jpg');
+    background-size:cover;
+    background-position:center;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  .saw-task{
+    position:absolute;
+    left:8px; top:8px;
+    background:rgba(20,14,10,.85);
+    border:1px solid var(--safety-orange);
+    border-radius:6px;
+    padding:5px 9px;
     font-family:'Courier New', monospace;
-    font-size:26px;
-    letter-spacing:1px;
+    font-weight:800; font-size:11px; letter-spacing:.6px;
+    color:#ffcf4d;
+    max-width:210px;
+    line-height:1.3;
+    z-index:5;
+  }
+  .saw-timerwrap{
+    position:absolute;
+    left:8px; right:8px; bottom:8px;
+    display:none;
+    z-index:5;
+  }
+  .saw-timer-track{
+    height:8px; border-radius:5px;
+    background:rgba(20,14,10,.85);
+    border:1px solid #4a3527;
+    overflow:hidden;
+  }
+  .saw-timer-fill{
+    height:100%; width:100%;
+    background:linear-gradient(90deg, #ff4d3d, #ffb020);
+  }
+  .hotspot{
+    position:absolute;
+    width:32px; height:32px;
+    margin-left:-16px; margin-top:-16px;
+    border-radius:50%;
+    display:none;
+    cursor:pointer;
+    border:3px solid #ffcf4d;
+    background:rgba(255,207,77,.18);
+  }
+  .hotspot.active{
+    display:block;
+    animation:hotspotPulse 1s ease-in-out infinite;
+  }
+  @keyframes hotspotPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,207,77,.55); }
+    50%{ box-shadow:0 0 0 9px rgba(255,207,77,0); }
+  }
+  .oil-hotspot{ left:12.7%; top:55%; }
+  .nut-hotspot{ left:75.3%; top:16%; }
+
+  .vib-panel{
+    display:none;
+    position:absolute; left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    background:rgba(20,14,10,.95);
+    border:1px solid var(--safety-orange);
+    border-radius:10px;
+    padding:16px 18px;
+    text-align:center;
+    width:190px;
+    box-shadow:0 12px 40px rgba(0,0,0,.6);
+    z-index:20;
+  }
+  .vib-panel.show{ display:block; }
+  .vib-title{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
     color:var(--safety-orange);
-    margin:0;
+    font-size:13px; margin-bottom:5px;
   }
-  #bossPlaceholder p{
+  .vib-sub{ font-size:10px; color:#c9b8a2; margin-bottom:10px; line-height:1.35; }
+  .vib-bolt-wrap{ margin-bottom:10px; }
+  #nutBolt{ transition: transform .1s ease; }
+  #nutBolt.shake{ animation: vibShake .15s linear infinite; }
+  @keyframes vibShake{
+    0%,100%{ transform:translateX(0) rotate(0deg); }
+    25%{ transform:translateX(-2px) rotate(-3deg); }
+    75%{ transform:translateX(2px) rotate(3deg); }
+  }
+  .vib-track{
+    height:7px; border-radius:5px; background:#1c140f;
+    border:1px solid #4a3527; overflow:hidden; margin-bottom:10px;
+  }
+  .vib-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, #caa06a, var(--safety-orange));
+    transition:width .12s ease;
+  }
+  .vib-panel button{
     font-family:'Courier New', monospace;
-    font-size:13px;
-    color:#e7c9ac;
-    max-width:420px;
-    line-height:1.6;
-    margin:0;
+    font-weight:800; letter-spacing:1px;
+    padding:8px 14px; border-radius:6px; border:none;
+    cursor:pointer; font-size:11px;
+    background:var(--safety-orange); color:#241300;
   }
-  #bossPlaceholder .eyes{
-    width:70px; height:34px;
-    background:linear-gradient(180deg,#3fd0ff,#0a7fb8);
-    clip-path:polygon(50% 0%, 100% 55%, 78% 100%, 22% 100%, 0% 55%);
-    box-shadow:0 0 30px 8px rgba(60,200,255,.6);
-    margin-bottom:6px;
+  .vib-panel button:active{ transform:scale(.94); }
+
+  .lifebar{
+    width:100%; max-width:980px;
+    display:flex; justify-content:flex-end;
   }
+  .lifebar-inner{
+    display:flex; align-items:center; gap:8px;
+  }
+  .lifebar-label{
+    font-family:'Segoe UI', system-ui, sans-serif;
+    font-weight:800; font-size:13px;
+    color:#fff; margin-right:2px;
+    text-shadow:0 1px 4px rgba(0,0,0,.8), 0 0 8px rgba(0,0,0,.6);
+  }
+  .life-icon{
+    position:relative;
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px;
+    background:rgba(255,255,255,.92);
+    border-radius:8px;
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    transition:transform .15s ease, background .2s ease;
+  }
+  .life-icon.defeated{
+    filter:grayscale(1) brightness(.7);
+    background:rgba(0,0,0,.12);
+  }
+  .life-icon.defeated::after{
+    content:'💀';
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    text-shadow:0 0 6px rgba(180,20,10,.7);
+  }
+  .life-icon.justHit{ animation: lifeHitPulse .4s ease; }
+  @keyframes lifeHitPulse{
+    0%{ transform:scale(1); }
+    30%{ transform:scale(1.35); }
+    100%{ transform:scale(1); }
+  }
+
+  #doomscrollerArt.hitFlash{ animation: cineShakeSmall .35s linear; }
+
+  .boss-timerwrap{ width:100%; }
+  .boss-timer-label{
+    font-family:'Courier New', monospace;
+    font-size:9px; letter-spacing:1.5px;
+    color:#e79a7a; margin-bottom:3px;
+  }
+  .boss-timer-track{
+    height:9px; border-radius:6px;
+    background:#1c140f;
+    border:1px solid #4a3527;
+    overflow:hidden;
+  }
+  .boss-timer-fill{
+    height:100%; width:100%;
+    background:linear-gradient(90deg, #ff4d3d, #ffb020);
+    transition:width .1s linear;
+  }
+  .boss-timer-fill.danger{ background:linear-gradient(90deg, #ff2b2b, #ff2b2b); }
+
+  #bfCanvasWrap{
+    position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);
+    border-radius:10px;
+    border:6px solid #201812;
+    overflow:hidden;
+    width:520px; max-width:100%;
+    background:#000;
+  }
+  #bfCanvasWrap canvas{ display:block; cursor:grab; background:#aeb3b7; }
+  #bfCanvasWrap canvas:active{ cursor:grabbing; }
+
+  #bfBlowBtn{
+    position:absolute; right:14px; top:14px;
+    width:110px; height:40px; box-sizing:border-box;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--safety-orange);
+    color:#241300;
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    font-size:12px;
+    padding:0;
+    border:none; border-radius:16px;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease;
+  }
+  #bfBlowBtn:active{ transform:scale(.94); }
+
+  #bfBlowHint{
+    position:absolute; top:22px; right:140px;
+    pointer-events:none;
+    animation: blowHintPulse 1.6s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  }
+  #bfBlowHint.hide{ display:none; }
+  @keyframes blowHintPulse{
+    0%,100%{ opacity:.5; transform:translate(0,0); }
+    50%{ opacity:1; transform:translate(6px,0); }
+  }
+
+  #bfBuyBtn{
+    position:absolute; right:14px; top:60px;
+    width:110px; height:40px; box-sizing:border-box;
+    background:#6b3f1e;
+    color:#ffc79a;
+    font-family:'Courier New', monospace;
+    padding:0 6px;
+    border:1px solid #a85a2c; border-radius:16px;
+    cursor:not-allowed;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transition:transform .08s ease, background .2s ease, color .2s ease;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15;
+    overflow:hidden;
+  }
+  #bfBuyBtn .buy-title{ font-weight:800; letter-spacing:.5px; font-size:9px; white-space:nowrap; }
+  #bfBuyBtn .buy-sub{ font-weight:700; letter-spacing:.2px; font-size:11px; opacity:.95; white-space:nowrap; }
+  #bfBuyBtn.affordable{ background:var(--safety-orange); color:#241300; border-color:transparent; cursor:pointer; }
+  #bfBuyBtn.affordable:active{ transform:scale(.94); }
+  #bfBuyBtn.owned{ background:#2e5b3a; color:#bdf0c9; border-color:transparent; cursor:default; }
+
+  #bfCanvasWrap .overlay{
+    position:absolute; inset:0;
+    background:rgba(20,14,10,.9);
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:20px; box-sizing:border-box;
+    z-index:20;
+  }
+  #bfCanvasWrap .overlay.show{ display:flex; }
+  #bfCanvasWrap .overlay h2{
+    font-family:'Courier New', monospace;
+    color:var(--safety-orange);
+    letter-spacing:2px;
+    font-size:23px;
+    margin:0 0 6px 0;
+  }
+  #bfCanvasWrap .overlay p.sub{ color:#c9b8a2; font-size:12px; margin:0 0 18px 0; letter-spacing:1px; max-width:320px; }
+  #bfCanvasWrap .btnrow{ display:flex; gap:12px; }
+  #bfCanvasWrap button{
+    font-family:'Courier New', monospace;
+    font-weight:700; letter-spacing:1px;
+    padding:11px 20px; border-radius:6px; border:none;
+    cursor:pointer; font-size:12px;
+    transition:transform .1s ease;
+  }
+  #bfCanvasWrap button:active{ transform:scale(.96); }
+  #bfCanvasWrap .btn-primary{ background:var(--safety-orange); color:#241300; }
+  #bfCanvasWrap .btn-ghost{ background:transparent; color:#c9b8a2; border:1px solid #4a3527; }
 </style>
 </head>
 <body>
@@ -201,10 +463,47 @@
         <div id="cineClickBlock"></div>
       </div>
 
-      <div id="bossPlaceholder">
-        <div class="eyes"></div>
-        <h1>THE DOOMSCROLLER</h1>
-        <p>The boss fight isn't built yet — you made it through the cinematic though! This is where the final fight will go.</p>
+    </div>
+    <div id="bossFight">
+      <img id="doomscrollerArt" src="attack.gif" alt="The Doomscroller">
+      <div id="sawWrap">
+        <div class="saw-task" id="sawTask">KEEP THE SAW RUNNING</div>
+        <div class="saw-timerwrap" id="sawTimerWrap">
+          <div class="saw-timer-track"><div class="saw-timer-fill" id="sawTimerFill"></div></div>
+        </div>
+        <div class="hotspot oil-hotspot" id="oilHotspot" title="Plug the leak"></div>
+        <div class="hotspot nut-hotspot" id="nutHotspot" title="Tighten the nut"></div>
+
+        <div class="vib-panel" id="oilPanel">
+          <div class="vib-title">OIL LEAK!</div>
+          <div class="vib-sub">Plug the hole before the saw seizes up.</div>
+          <div class="vib-bolt-wrap" style="font-size:36px;">🛢️</div>
+          <div class="vib-track"><div class="vib-fill" id="oilFill"></div></div>
+          <button id="plugBtn">PLUG IT</button>
+        </div>
+
+        <div class="vib-panel" id="nutPanel">
+          <div class="vib-title">LOOSE NUT!</div>
+          <div class="vib-sub">Tighten it before it rattles loose.</div>
+          <div class="vib-bolt-wrap">
+            <svg id="nutBolt" width="60" height="60" viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="26" fill="#8B9099" stroke="#3a3d40" stroke-width="3"/>
+              <polygon points="35,14 45,20 45,32 35,38 25,32 25,20" fill="#4a4e52" stroke="#241a12" stroke-width="1.5"/>
+              <circle cx="35" cy="26" r="4" fill="#1c1414"/>
+            </svg>
+          </div>
+          <div class="vib-track"><div class="vib-fill" id="nutFill"></div></div>
+          <button id="tightenNutBtn">TIGHTEN</button>
+        </div>
+      </div>
+      <div class="lifebar">
+        <div class="lifebar-inner">
+          <div class="life-icon" id="life0">🐦</div>
+          <div class="life-icon" id="life1">🦉</div>
+          <div class="life-icon" id="life2">🦊</div>
+          <div class="life-icon" id="life3">🗡️</div>
+          <div class="life-icon" id="life4">👑</div>
+        </div>
       </div>
     </div>
   </div>
@@ -237,7 +536,7 @@ const dialogueLine = dialogue.querySelector('.line');
 const canvasWrap = document.getElementById('canvasWrap');
 const cineWrap = document.getElementById('cineWrap');
 const cineClickBlock = document.getElementById('cineClickBlock');
-const bossPlaceholder = document.getElementById('bossPlaceholder');
+const bossFight = document.getElementById('bossFight');
 
 let currentLayer = imgA;
 let nextLayer = imgB;
@@ -315,8 +614,8 @@ function startBossMusic(){
   // hook: start the final boss music track once one exists.
 }
 function activateBossMechanics(){
-  // hook: this is where the real boss fight gets kicked off.
-  bossPlaceholder.classList.add('show');
+  bossFight.classList.add('show');
+  initBossFight();
 }
 
 function setDialogue(text){
@@ -418,7 +717,7 @@ function playSequenceStep(index){
 function startCinematic(){
   sessionStorage.setItem('bossCinematicSeen', 'true');
   cineWrap.style.display = 'block';
-  bossPlaceholder.classList.remove('show');
+  bossFight.classList.remove('show');
   blackout.style.opacity = '1';
   playSequenceStep(0);
 }
@@ -427,6 +726,7 @@ function endCinematic(){
   cineClickBlock.style.display = 'none';
   window.setTimeout(()=>{
     cineWrap.style.display = 'none';
+    canvasWrap.style.display = 'none';
     startBossMusic();
     activateBossMechanics();
   }, 50);
@@ -435,8 +735,183 @@ function endCinematic(){
 function skipStraightToBoss(){
   cineWrap.style.display = 'none';
   cineClickBlock.style.display = 'none';
+  canvasWrap.style.display = 'none';
   startBossMusic();
   activateBossMechanics();
+}
+
+// =========================================================
+// Boss fight — Stage 1: keep the saw running.
+// The Doomscroller isn't attacking the player directly — he's
+// sabotaging the scroll saw itself. Two scripted events fire in
+// order (oil leak, then a loose nut). Failing an event costs one
+// of the 5 life icons (now representing the SAW's health). Survive
+// both and Stage 1 hands off to the Lightscroller pickup (Stage 2
+// not built yet).
+// =========================================================
+let bossFightStarted = false;
+
+const LIFE_IDS = ['life0','life1','life2','life3','life4'];
+const OIL_TIME_MS = 9000;
+const OIL_CLICKS_NEEDED = 8;
+const NUT_TIME_MS = 9000;
+const TIGHTEN_CLICKS_NEEDED = 5;
+
+let stage1State = 'idle'; // idle | oil | oil_panel | nut | nut_panel | complete | gameover
+let defeatedCount = 0;
+let oilProgress = 0;
+let nutProgress = 0;
+let eventTimerHandle = null;
+
+function bf(id){ return document.getElementById(id); }
+
+function setSawTask(text){ bf('sawTask').textContent = text; }
+
+function showEventTimer(show){ bf('sawTimerWrap').style.display = show ? 'block' : 'none'; }
+
+function startEventTimer(durationMs, onExpire){
+  const fill = bf('sawTimerFill');
+  showEventTimer(true);
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  void fill.offsetWidth;
+  requestAnimationFrame(() => {
+    fill.style.transition = `width ${durationMs}ms linear`;
+    fill.style.width = '0%';
+  });
+  clearTimeout(eventTimerHandle);
+  eventTimerHandle = setTimeout(onExpire, durationMs);
+}
+function stopEventTimer(){
+  clearTimeout(eventTimerHandle);
+  showEventTimer(false);
+}
+
+function loseLife(){
+  if(defeatedCount >= LIFE_IDS.length) return;
+  const el = bf(LIFE_IDS[defeatedCount]);
+  el.classList.add('defeated');
+  el.classList.remove('justHit');
+  void el.offsetWidth;
+  el.classList.add('justHit');
+  defeatedCount++;
+  if(bossFight) bossFight.classList.remove('shakeSmall');
+  void bossFight.offsetWidth;
+  bossFight.classList.add('shakeSmall');
+  if(defeatedCount >= LIFE_IDS.length){
+    triggerGameOver();
+  }
+}
+
+function initBossFight(){
+  LIFE_IDS.forEach(id => { const el = bf(id); el.classList.remove('defeated','justHit'); });
+  defeatedCount = 0;
+  stage1State = 'idle';
+  setSawTask('KEEP THE SAW RUNNING!');
+  showEventTimer(false);
+
+  bf('plugBtn').addEventListener('click', onPlugClick);
+  bf('tightenNutBtn').addEventListener('click', onTightenClick);
+  bf('oilHotspot').addEventListener('click', () => { if(stage1State === 'oil') openOilPanel(); });
+  bf('nutHotspot').addEventListener('click', () => { if(stage1State === 'nut') openNutPanel(); });
+
+  setTimeout(startOilLeak, 1400);
+}
+
+// ---- Event 1: oil leak ----
+function startOilLeak(){
+  stage1State = 'oil';
+  setSawTask('OIL LEAK! PLUG THE HOLE!');
+  bf('oilHotspot').classList.add('active');
+  startEventTimer(OIL_TIME_MS, onOilFail);
+}
+function openOilPanel(){
+  if(stage1State !== 'oil') return;
+  stage1State = 'oil_panel';
+  oilProgress = 0;
+  bf('oilFill').style.width = '0%';
+  bf('oilPanel').classList.add('show');
+}
+function onPlugClick(){
+  if(stage1State !== 'oil_panel') return;
+  oilProgress++;
+  bf('oilFill').style.width = Math.min(100, (oilProgress / OIL_CLICKS_NEEDED) * 100) + '%';
+  if(oilProgress >= OIL_CLICKS_NEEDED) resolveOil();
+}
+function resolveOil(){
+  stopEventTimer();
+  bf('oilPanel').classList.remove('show');
+  bf('oilHotspot').classList.remove('active');
+  stage1State = 'idle';
+  setSawTask('NICE FIX! SAW STABILIZING...');
+  setTimeout(startLooseNut, 1600);
+}
+function onOilFail(){
+  if(stage1State !== 'oil' && stage1State !== 'oil_panel') return;
+  bf('oilPanel').classList.remove('show');
+  loseLife();
+  if(defeatedCount >= LIFE_IDS.length) return;
+  stage1State = 'oil';
+  setSawTask('OIL LEAK! PLUG THE HOLE!');
+  startEventTimer(OIL_TIME_MS, onOilFail);
+}
+
+// ---- Event 2: loose nut (reuses the tighten mechanic) ----
+function startLooseNut(){
+  stage1State = 'nut';
+  setSawTask('LOOSE NUT! TIGHTEN IT!');
+  bf('nutHotspot').classList.add('active');
+  startEventTimer(NUT_TIME_MS, onNutFail);
+}
+function openNutPanel(){
+  if(stage1State !== 'nut') return;
+  stage1State = 'nut_panel';
+  nutProgress = 0;
+  bf('nutFill').style.width = '0%';
+  bf('nutBolt').classList.add('shake');
+  bf('nutPanel').classList.add('show');
+}
+function onTightenClick(){
+  if(stage1State !== 'nut_panel') return;
+  nutProgress++;
+  bf('nutFill').style.width = Math.min(100, (nutProgress / TIGHTEN_CLICKS_NEEDED) * 100) + '%';
+  if(nutProgress >= TIGHTEN_CLICKS_NEEDED) resolveNut();
+}
+function resolveNut(){
+  stopEventTimer();
+  bf('nutBolt').classList.remove('shake');
+  bf('nutPanel').classList.remove('show');
+  bf('nutHotspot').classList.remove('active');
+  stage1State = 'complete';
+  setSawTask('SAW SECURE!');
+  setTimeout(completeStage1, 1400);
+}
+function onNutFail(){
+  if(stage1State !== 'nut' && stage1State !== 'nut_panel') return;
+  bf('nutBolt').classList.remove('shake');
+  bf('nutPanel').classList.remove('show');
+  loseLife();
+  if(defeatedCount >= LIFE_IDS.length) return;
+  stage1State = 'nut';
+  setSawTask('LOOSE NUT! TIGHTEN IT!');
+  startEventTimer(NUT_TIME_MS, onNutFail);
+}
+
+// ---- Stage 1 end states ----
+function completeStage1(){
+  stopEventTimer();
+  setSawTask('STAGE 1 COMPLETE!');
+  // TODO: grant "The Lightscroller" and transition into Stage 2 (not yet built).
+}
+function triggerGameOver(){
+  stopEventTimer();
+  stage1State = 'gameover';
+  bf('oilPanel').classList.remove('show');
+  bf('nutPanel').classList.remove('show');
+  bf('oilHotspot').classList.remove('active');
+  bf('nutHotspot').classList.remove('active');
+  setSawTask('THE SAW IS DEAD...');
+  // TODO: real game-over overlay + retry button. Placeholder for now.
 }
 
 // The cinematic only plays once per boss attempt. Once real boss-fight
