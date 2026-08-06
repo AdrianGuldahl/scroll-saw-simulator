@@ -802,7 +802,7 @@ loop();
 
 document.getElementById('retryBtn').addEventListener('click', resetGame);
 document.getElementById('nextBtn').addEventListener('click', ()=>{
-  alert('Body is next 🦊');
+  window.location.href = 'the-fox-on-the-run-6.html';
 });
 
 function blowDust(){
@@ -842,6 +842,16 @@ function updateBuyBtn(){
   }
 }
 updateBuyBtn();
+(function(){
+  var dustChoice = localStorage.getItem('dustBlowerChoice');
+  if(dustChoice === 'declined'){
+    document.getElementById('buyBtn').style.display = 'none';
+  } else if(dustChoice === 'active'){
+    dustBlowerOwned = true;
+    dustAmount = 0;
+    updateBuyBtn();
+  }
+})();
 
 document.getElementById('buyBtn').addEventListener('click', ()=>{
   if(dustBlowerOwned || points < DUST_BLOWER_COST) return;

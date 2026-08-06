@@ -803,7 +803,7 @@ loop();
 
 document.getElementById('retryBtn').addEventListener('click', resetGame);
 document.getElementById('nextBtn').addEventListener('click', ()=>{
-  alert('Right Eye is next 🦉');
+  window.location.href = 'the-owl-of-mystery-2.html';
 });
 
 function blowDust(){
@@ -861,11 +861,13 @@ document.getElementById('sawdustPowerBtn').addEventListener('click', ()=>{
   document.getElementById('dustChoiceOverlay').classList.remove('show');
   document.getElementById('sawdustModeText').classList.add('show');
   document.getElementById('buyBtn').classList.add('hidden');
+  localStorage.setItem('dustBlowerChoice', 'declined');
 });
 document.getElementById('easyModeYesBtn').addEventListener('click', ()=>{
   dustBlowerOwned = true;
   dustAmount = 0;
   updateBuyBtn();
+  localStorage.setItem('dustBlowerChoice', 'active');
   document.getElementById('easyModeConfirmOverlay').classList.remove('show');
   document.getElementById('easyModeText').classList.add('show');
 });
