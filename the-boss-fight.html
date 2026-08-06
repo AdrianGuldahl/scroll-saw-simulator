@@ -188,12 +188,16 @@
     width:372px;
     height:327px;
     box-sizing:border-box;
-    border-radius:4px;
-    overflow:hidden;
-    background-image:url('saw-maintenance.jpg');
-    background-size:cover;
-    background-position:center;
-    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  #sawImg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:bottom;
+    filter:drop-shadow(0 14px 16px rgba(0,0,0,.55));
+    pointer-events:none;
   }
   .saw-task{
     position:absolute;
@@ -243,8 +247,8 @@
     0%,100%{ box-shadow:0 0 0 0 rgba(255,207,77,.55); }
     50%{ box-shadow:0 0 0 9px rgba(255,207,77,0); }
   }
-  .oil-hotspot{ left:12.7%; top:55%; }
-  .nut-hotspot{ left:75.3%; top:16%; }
+  .oil-hotspot{ left:17.8%; top:45.2%; }
+  .nut-hotspot{ left:43.6%; top:11.9%; }
 
   .vib-panel{
     display:none;
@@ -467,6 +471,7 @@
     <div id="bossFight">
       <img id="doomscrollerArt" src="attack.gif" alt="The Doomscroller">
       <div id="sawWrap">
+        <img id="sawImg" src="saw-maintenance.png" alt="The scroll saw">
         <div class="saw-task" id="sawTask">KEEP THE SAW RUNNING</div>
         <div class="saw-timerwrap" id="sawTimerWrap">
           <div class="saw-timer-track"><div class="saw-timer-fill" id="sawTimerFill"></div></div>
