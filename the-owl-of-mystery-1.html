@@ -207,6 +207,7 @@
     border-color:transparent;
     cursor:default;
   }
+  #buyBtn.hidden{ display:none; }
 
   .instructions{
     margin-top:10px;
@@ -859,6 +860,7 @@ document.getElementById('activateDustBtn').addEventListener('click', ()=>{
 document.getElementById('sawdustPowerBtn').addEventListener('click', ()=>{
   document.getElementById('dustChoiceOverlay').classList.remove('show');
   document.getElementById('sawdustModeText').classList.add('show');
+  document.getElementById('buyBtn').classList.add('hidden');
 });
 document.getElementById('easyModeYesBtn').addEventListener('click', ()=>{
   dustBlowerOwned = true;
