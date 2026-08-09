@@ -169,8 +169,100 @@
       url('boss-workshop-bg.jpg');
     background-size:cover;
     background-position:center;
+    transition:filter .9s ease;
+    user-select:none;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    -webkit-touch-callout:none;
   }
   #bossFight.show{ display:flex; }
+  #bossFight.defeated{ filter:grayscale(1) brightness(.5); }
+  #bossFight img{
+    -webkit-user-drag:none;
+    user-drag:none;
+    -khtml-user-drag:none;
+    -moz-user-drag:none;
+    -o-user-drag:none;
+  }
+
+  #bossGameOver{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    background:rgba(0,0,0,.6);
+  }
+  #bossGameOver.show{ display:flex; }
+  .go-title{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:4px;
+    font-size:44px;
+    color:#ff4d3d;
+    text-shadow:0 4px 20px rgba(0,0,0,.85);
+  }
+  #bossContinueBtn{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1.5px;
+    padding:13px 28px; border-radius:8px; border:none;
+    cursor:pointer; font-size:15px;
+    background:var(--safety-orange); color:#241300;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  #bossContinueBtn:active{ transform:scale(.95); }
+
+  #stage2GameOver{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    background:rgba(0,0,0,.72);
+    padding:20px;
+    box-sizing:border-box;
+  }
+  #stage2GameOver.show{ display:flex; }
+  #stage2GameOver img{
+    height:260px;
+    width:auto;
+    filter:drop-shadow(0 12px 30px rgba(0,0,0,.7));
+  }
+  .go2-main{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:4px;
+    font-size:44px;
+    color:#ff4d3d;
+    text-align:center;
+    text-shadow:0 4px 20px rgba(0,0,0,.85);
+  }
+  .go2-sub{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1px;
+    font-size:17px;
+    color:#ffcf4d;
+    text-align:center;
+    max-width:520px;
+    line-height:1.4;
+    margin-top:-6px;
+    text-shadow:0 3px 12px rgba(0,0,0,.85);
+  }
+  #stage2ContinueBtn{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1.5px;
+    padding:13px 28px; border-radius:8px; border:none;
+    cursor:pointer; font-size:15px;
+    background:var(--safety-orange); color:#241300;
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  #stage2ContinueBtn:active{ transform:scale(.95); }
+
   #doomscrollerArt{
     position:absolute;
     left:14px;
@@ -179,6 +271,409 @@
     width:auto;
     filter:drop-shadow(0 18px 20px rgba(0,0,0,.65)) drop-shadow(0 0 18px rgba(80,190,255,.15));
     pointer-events:none;
+    transition:opacity .6s ease;
+  }
+  #doomscrollerArt.faded{ opacity:0; }
+
+  #doomscrollerBlindArt{
+    position:absolute;
+    left:14px;
+    bottom:70px;
+    height:440px;
+    width:auto;
+    filter:drop-shadow(0 18px 20px rgba(0,0,0,.65)) drop-shadow(0 0 24px rgba(255,220,120,.6));
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .6s ease;
+  }
+  #doomscrollerBlindArt.show{ opacity:1; }
+
+  #doomscrollerStabbedArt{
+    position:absolute;
+    left:14px;
+    bottom:70px;
+    height:440px;
+    width:auto;
+    filter:drop-shadow(0 18px 20px rgba(0,0,0,.65)) drop-shadow(0 0 22px rgba(255,80,50,.55));
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .6s ease;
+  }
+  #doomscrollerStabbedArt.show{ opacity:1; }
+
+  .armor-frame{
+    position:absolute;
+    left:50%;
+    bottom:70px;
+    height:400px;
+    width:auto;
+    transform:translateX(-50%);
+    filter:drop-shadow(0 18px 20px rgba(0,0,0,.65));
+    pointer-events:none;
+    display:none;
+  }
+  .armor-frame.show{ display:block; }
+
+  /* Doomscroller running away (farther/smaller than the .armor-frame poses) —
+     drifted off-center toward the exit, same floor line (bottom:70px). */
+  .run-far{
+    position:absolute;
+    left:62%;
+    bottom:70px;
+    height:260px;
+    width:auto;
+    transform:translateX(-50%);
+    filter:drop-shadow(0 14px 16px rgba(0,0,0,.6));
+    pointer-events:none;
+    display:none;
+  }
+  .run-far.show{ display:block; }
+
+  /* The dropped wooden object — sits on the floor where Doomscroller left
+     it. Not interactive until .interactive is added once he's gone. */
+  .floor-object{
+    position:absolute;
+    left:57%;
+    bottom:74px;
+    height:66px;
+    width:auto;
+    transform:translateX(-50%);
+    filter:drop-shadow(0 8px 10px rgba(0,0,0,.55));
+    pointer-events:none;
+    display:none;
+    transition:filter .18s ease;
+  }
+  .floor-object.show{ display:block; }
+  .floor-object.interactive{ pointer-events:auto; cursor:pointer; }
+  .floor-object.interactive:hover{ filter:drop-shadow(0 8px 10px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(255,210,110,.9)) brightness(1.15); }
+  .floor-object.picked-up{ animation:objectFlip .5s ease-in-out; }
+  @keyframes objectFlip{
+    0%{ transform:translateX(-50%) scaleX(1); }
+    50%{ transform:translateX(-50%) scaleX(0.05); }
+    100%{ transform:translateX(-50%) scaleX(1); }
+  }
+
+  /* Close-up "hand holding the object" reveal panels — same hard-cut show/
+     hide pattern as every other cutscene image in this file, just centered
+     mid-box instead of floor-anchored since there's no character body. */
+  .object-reveal{
+    position:absolute;
+    left:50%;
+    bottom:-24px; /* the forearm's cut edge tucks just past the frame border,
+                      so overflow:hidden hides the seam and the hand reads as
+                      reaching up into frame from the player's own position */
+    transform:translateX(-50%);
+    width:460px;
+    height:auto;
+    filter:drop-shadow(0 18px 30px rgba(0,0,0,.7));
+    pointer-events:none;
+    display:none;
+  }
+  .object-reveal.show{ display:block; }
+
+  #inspectTextBox{
+    position:absolute;
+    left:50%; bottom:16px;
+    transform:translateX(-50%);
+    width:520px;
+    max-width:90%;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    z-index:50;
+    background:rgba(20,14,4,.9);
+    border:2px solid #ffcf4d;
+    border-radius:10px;
+    padding:14px 20px;
+    box-shadow:0 16px 44px rgba(0,0,0,.7);
+  }
+  #inspectTextBox.show{ display:flex; }
+  #inspectTextBox p{
+    margin:0;
+    font-family:'Courier New', monospace;
+    font-weight:800;
+    font-size:19px;
+    line-height:1.3;
+    letter-spacing:.5px;
+    color:#ffe9b0;
+    text-align:center;
+  }
+  #turnAroundBtn{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1.5px;
+    padding:11px 24px; border-radius:8px; border:none;
+    cursor:pointer; font-size:14px;
+    background:var(--safety-orange); color:#241300;
+    box-shadow:0 8px 20px rgba(0,0,0,.5);
+    display:none;
+  }
+  #turnAroundBtn.show{ display:inline-block; }
+  #turnAroundBtn:active{ transform:scale(.95); }
+
+  #followStormBtn{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:1.5px;
+    padding:11px 24px; border-radius:8px; border:2px solid #ff4d3d;
+    cursor:pointer; font-size:14px;
+    background:#2a0806; color:#ff8f7a;
+    box-shadow:0 8px 20px rgba(0,0,0,.5);
+    display:none;
+    animation:followStormPulse 1.4s ease-in-out infinite;
+  }
+  #followStormBtn.show{ display:inline-block; }
+  #followStormBtn:active{ transform:scale(.95); }
+  @keyframes followStormPulse{
+    0%,100%{ box-shadow:0 8px 20px rgba(0,0,0,.5), 0 0 0 0 rgba(255,77,61,.55); }
+    50%{ box-shadow:0 8px 20px rgba(0,0,0,.5), 0 0 0 8px rgba(255,77,61,0); }
+  }
+
+  @keyframes shakeSubtle{
+    0%{ transform:translate(-50%,0); }
+    20%{ transform:translate(calc(-50% + 1px),-1px); }
+    40%{ transform:translate(calc(-50% - 1px),1px); }
+    60%{ transform:translate(calc(-50% + 1px),1px); }
+    80%{ transform:translate(calc(-50% - 1px),-1px); }
+    100%{ transform:translate(-50%,0); }
+  }
+  @keyframes shakeStrong{
+    0%{ transform:translate(-50%,0); }
+    15%{ transform:translate(calc(-50% + 3px),-3px); }
+    30%{ transform:translate(calc(-50% - 4px),2px); }
+    45%{ transform:translate(calc(-50% + 4px),3px); }
+    60%{ transform:translate(calc(-50% - 3px),-4px); }
+    75%{ transform:translate(calc(-50% + 3px),-2px); }
+    90%{ transform:translate(calc(-50% - 2px),3px); }
+    100%{ transform:translate(-50%,0); }
+  }
+  @keyframes shakeSmall{
+    0%{ transform:translate(-50%,0); }
+    25%{ transform:translate(calc(-50% - 1px),1px); }
+    50%{ transform:translate(calc(-50% + 1px),-1px); }
+    75%{ transform:translate(calc(-50% - 1px),-1px); }
+    100%{ transform:translate(-50%,0); }
+  }
+  @keyframes shakeImpact{
+    0%{ transform:translate(-50%,0); }
+    10%{ transform:translate(calc(-50% + 4px),-3px); }
+    25%{ transform:translate(calc(-50% - 4px),3px); }
+    40%{ transform:translate(calc(-50% + 3px),4px); }
+    55%{ transform:translate(calc(-50% - 3px),-4px); }
+    70%{ transform:translate(calc(-50% + 2px),2px); }
+    85%{ transform:translate(calc(-50% - 1px),-1px); }
+    100%{ transform:translate(-50%,0); }
+  }
+  .shake-subtle{ animation: shakeSubtle .13s linear infinite; }
+  .shake-strong{ animation: shakeStrong .09s linear infinite; }
+  .shake-small{ animation: shakeSmall .15s linear infinite; }
+  .shake-impact{ animation: shakeImpact .2s linear 1; }
+
+  #stageBanner{
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    z-index:60;
+    display:none;
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:6px;
+    font-size:40px;
+    color:#ffcf4d;
+    text-shadow:0 0 18px rgba(255,207,77,.85), 0 4px 14px rgba(0,0,0,.85);
+    opacity:0;
+    transition:opacity .5s ease;
+    pointer-events:none;
+  }
+  #stageBanner.show{ display:block; opacity:1; }
+
+  /* ---------- Stage 2: first-person Lightscroller combat (test build) ---------- */
+  #combatSword{
+    position:absolute;
+    left:52%;
+    bottom:-30px;
+    width:300px;
+    height:auto;
+    transform-origin:68% 88%;
+    transform:translateX(-32%) rotate(0deg) translate(0,0) scale(1);
+    transition:transform .2s cubic-bezier(.2,.7,.3,1);
+    pointer-events:none;
+    z-index:55;
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,.6));
+    display:none;
+  }
+  #combatSword.show{ display:block; }
+  #combatSword.windup{ transition:transform .09s ease-in; }
+  #combatSword.swinging{ transition:transform .11s cubic-bezier(.3,0,.15,1); }
+  #combatSword.recovering{ transition:transform .22s cubic-bezier(.2,.7,.3,1); }
+
+  .armor-piece{
+    position:absolute;
+    width:70px;
+    height:auto;
+    display:none;
+    pointer-events:none;
+    z-index:30;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));
+  }
+  .armor-piece.show{ display:block; }
+  .armor-piece.deflected{
+    transition: left .45s ease-out, top .45s ease-out, opacity .4s ease-out .05s, transform .45s ease-out;
+    opacity:0;
+  }
+  .armor-piece.attached{
+    transition: opacity .3s ease;
+  }
+
+  #swordHitFlash{
+    position:absolute;
+    width:80px; height:80px;
+    margin-left:-40px; margin-top:-40px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(255,220,120,.75) 35%, rgba(255,180,60,0) 72%);
+    display:none;
+    z-index:56;
+    pointer-events:none;
+  }
+  #swordHitFlash.show{ display:block; animation: hitFlashPop .3s ease-out; }
+  @keyframes hitFlashPop{
+    0%{ transform:scale(.3); opacity:0; }
+    30%{ transform:scale(1.15); opacity:1; }
+    100%{ transform:scale(1.7); opacity:0; }
+  }
+
+  #victoryFlash{
+    position:absolute;
+    inset:0;
+    z-index:48;
+    display:none;
+    pointer-events:none;
+    background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.55) 0%, rgba(255,255,255,.18) 40%, rgba(255,255,255,0) 68%);
+  }
+  #victoryFlash.show{ display:block; animation: victoryFlashPop .3s ease-out; }
+  @keyframes victoryFlashPop{
+    0%{ opacity:0; }
+    15%{ opacity:.6; }
+    100%{ opacity:0; }
+  }
+
+  #rageDialogue{
+    position:absolute;
+    left:50%; bottom:16px;
+    transform:translateX(-50%);
+    width:520px;
+    max-width:90%;
+    display:none;
+    z-index:50;
+    background:rgba(20,4,4,.9);
+    border:2px solid #ff4d3d;
+    border-radius:10px;
+    padding:14px 20px;
+    box-shadow:0 16px 44px rgba(0,0,0,.7);
+    pointer-events:none;
+  }
+  #rageDialogue.show{
+    display:block;
+    animation:rageShake .35s ease-in-out infinite;
+  }
+  #rageDialogue.fadeout{
+    animation:none;
+    opacity:0;
+    transition:opacity .5s ease;
+  }
+  #rageDialogue p{
+    margin:0;
+    font-family:'Courier New', monospace;
+    font-weight:800;
+    font-size:19px;
+    line-height:1.3;
+    letter-spacing:.5px;
+    color:#ff4d3d;
+    text-align:center;
+    text-shadow:0 0 10px rgba(255,77,61,.8), 0 3px 8px rgba(0,0,0,.9);
+  }
+  @keyframes rageShake{
+    0%,100%{ transform:translateX(-50%) rotate(0deg); }
+    20%{ transform:translateX(calc(-50% - 4px)) rotate(-1.2deg); }
+    40%{ transform:translateX(calc(-50% + 4px)) rotate(1.2deg); }
+    60%{ transform:translateX(calc(-50% - 3px)) rotate(-1deg); }
+    80%{ transform:translateX(calc(-50% + 3px)) rotate(1deg); }
+  }
+
+  #attackBanner{
+    position:absolute;
+    top:10px; left:50%;
+    transform:translateX(-50%);
+    width:260px;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    z-index:40;
+    pointer-events:none;
+  }
+  #attackBanner.show{ display:flex; }
+  .attack-title{
+    font-family:'Courier New', monospace;
+    font-weight:800; letter-spacing:2px;
+    font-size:20px;
+    color:#ffcf4d;
+    text-shadow:0 0 10px rgba(255,207,77,.9), 0 3px 10px rgba(0,0,0,.8);
+    animation:attackPulse .5s ease-in-out infinite alternate;
+  }
+  @keyframes attackPulse{
+    0%{ transform:scale(1); }
+    100%{ transform:scale(1.12); }
+  }
+  .attack-timerwrap{ width:100%; }
+  .attack-timer-track{
+    height:10px; border-radius:6px;
+    background:#1c140f; border:1px solid #4a3527; overflow:hidden;
+  }
+  .attack-timer-fill{
+    height:100%; width:100%;
+    background:linear-gradient(90deg,#ff4d3d,#ffb020);
+  }
+
+  #lightscrollerAttack{
+    position:absolute;
+    width:135px;
+    display:none;
+    cursor:pointer;
+    z-index:45;
+    transition: left .18s ease, top .18s ease;
+  }
+  #lightscrollerAttack.show{ display:block; }
+  #lightscrollerAttack img{
+    width:100%; height:auto; display:block;
+    filter:drop-shadow(0 0 16px rgba(255,214,120,1)) drop-shadow(0 6px 10px rgba(0,0,0,.6));
+    animation:lightscrollerGlow 1s ease-in-out infinite;
+  }
+
+  #lightscrollerGround{
+    position:absolute;
+    left:36px;
+    bottom:10px;
+    width:200px;
+    pointer-events:none;
+    z-index:6;
+    transition:opacity .5s ease;
+  }
+  #lightscrollerGround img{
+    width:100%;
+    height:auto;
+    display:block;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.65));
+    transition:filter .4s ease;
+  }
+  #lightscrollerGround.lit{
+    pointer-events:auto;
+    cursor:pointer;
+  }
+  #lightscrollerGround.lit img{
+    animation:lightscrollerGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes lightscrollerGlow{
+    0%,100%{ filter:drop-shadow(0 6px 10px rgba(0,0,0,.65)) drop-shadow(0 0 10px rgba(255,214,120,.65)); }
+    50%{ filter:drop-shadow(0 6px 10px rgba(0,0,0,.65)) drop-shadow(0 0 24px rgba(255,214,120,1)); }
   }
 
   #sawWrap{
@@ -188,7 +683,56 @@
     width:372px;
     height:327px;
     box-sizing:border-box;
+    transform-origin:60% 75%;
   }
+
+  @keyframes sawShakeSubtle{
+    0%{ transform:translate(0,0) rotate(0deg); }
+    25%{ transform:translate(1px,0) rotate(.1deg); }
+    50%{ transform:translate(-1px,1px) rotate(-.1deg); }
+    75%{ transform:translate(1px,-1px) rotate(.1deg); }
+    100%{ transform:translate(0,0) rotate(0deg); }
+  }
+  @keyframes sawShakeWobble{
+    0%{ transform:translate(0,0) rotate(0deg); }
+    20%{ transform:translate(2px,-1px) rotate(.6deg); }
+    40%{ transform:translate(-2px,1px) rotate(-.7deg); }
+    60%{ transform:translate(2px,1px) rotate(.5deg); }
+    80%{ transform:translate(-1px,-2px) rotate(-.4deg); }
+    100%{ transform:translate(0,0) rotate(0deg); }
+  }
+  @keyframes sawShakeHeavy{
+    0%{ transform:translate(0,0) rotate(0deg); }
+    15%{ transform:translate(3px,-2px) rotate(1.4deg); }
+    30%{ transform:translate(-4px,2px) rotate(-1.8deg); }
+    45%{ transform:translate(4px,3px) rotate(1.6deg); }
+    60%{ transform:translate(-3px,-3px) rotate(-1.4deg); }
+    75%{ transform:translate(3px,-1px) rotate(1.2deg); }
+    90%{ transform:translate(-2px,2px) rotate(-1deg); }
+    100%{ transform:translate(0,0) rotate(0deg); }
+  }
+  .saw-shake-subtle{ animation: sawShakeSubtle .16s linear infinite; }
+  .saw-shake-wobble{ animation: sawShakeWobble .12s linear infinite; }
+  .saw-shake-heavy{ animation: sawShakeHeavy .08s linear infinite; }
+
+  #sawWrap.saw-fall{
+    animation:none;
+    transition: transform .65s cubic-bezier(.55,-.1,.85,.35), opacity .65s ease .1s;
+    transform: translate(300px, 160px) rotate(42deg);
+    opacity:0;
+  }
+
+  @keyframes bossImpactShake{
+    0%,100%{ transform:translate(0,0); }
+    15%{ transform:translate(-6px,3px); }
+    30%{ transform:translate(5px,-4px); }
+    45%{ transform:translate(-4px,4px); }
+    60%{ transform:translate(4px,-3px); }
+    75%{ transform:translate(-3px,2px); }
+    90%{ transform:translate(2px,-1px); }
+  }
+  #bossFight.boss-impact-shake{ animation: bossImpactShake .3s ease-out; }
+
   #sawImg{
     position:absolute;
     inset:0;
@@ -199,19 +743,20 @@
     filter:drop-shadow(0 14px 16px rgba(0,0,0,.55));
     pointer-events:none;
   }
-  .saw-task{
-    position:absolute;
-    left:8px; top:8px;
+  .taskbar-wrap{
+    width:100%; max-width:980px;
+    display:flex; justify-content:flex-end;
+  }
+  .taskbar{
     background:rgba(20,14,10,.85);
     border:1px solid var(--safety-orange);
     border-radius:6px;
-    padding:5px 9px;
+    padding:5px 10px;
     font-family:'Courier New', monospace;
     font-weight:800; font-size:11px; letter-spacing:.6px;
     color:#ffcf4d;
-    max-width:210px;
     line-height:1.3;
-    z-index:5;
+    text-align:right;
   }
   .saw-timerwrap{
     position:absolute;
@@ -249,6 +794,35 @@
   }
   .oil-hotspot{ left:17.8%; top:45.2%; }
   .nut-hotspot{ left:43.6%; top:11.9%; }
+
+  .spill-overlay{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    z-index:15;
+    background:rgba(0,0,0,.3);
+  }
+  .spill-overlay.show{ display:flex; }
+  .spill-overlay img{
+    width:82%;
+    max-width:300px;
+    pointer-events:none;
+    filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));
+  }
+  .spill-hint{
+    font-family:'Courier New', monospace;
+    font-weight:800; font-size:11px; letter-spacing:1px;
+    color:#ffcf4d;
+    background:rgba(20,14,10,.85);
+    border:1px solid var(--safety-orange);
+    border-radius:6px;
+    padding:4px 9px;
+    pointer-events:none;
+  }
 
   .vib-panel{
     display:none;
@@ -297,8 +871,14 @@
   }
   .vib-panel button:active{ transform:scale(.94); }
 
-  .lifebar{
+  .top-row{
     width:100%; max-width:980px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .boss-lifebar{
+    display:flex; align-items:center; gap:8px;
+  }
+  .lifebar{
     display:flex; justify-content:flex-end;
   }
   .lifebar-inner{
@@ -469,15 +1049,59 @@
 
     </div>
     <div id="bossFight">
-      <img id="doomscrollerArt" src="attack.gif" alt="The Doomscroller">
+      <img id="doomscrollerArt" src="attack.gif" alt="The Doomscroller" draggable="false">
+      <img id="doomscrollerBlindArt" src="doomscroller-blinded.gif" alt="The Doomscroller, blinded" draggable="false">
+      <img id="doomscrollerStabbedArt" src="doomscroller-stabbed.png" alt="The Doomscroller, stabbed" draggable="false">
+      <img id="armorFrame1" class="armor-frame" src="armor-frame-1.png" alt="" draggable="false">
+      <img id="armorFrame2" class="armor-frame" src="armor-frame-2.png" alt="" draggable="false">
+      <img id="armorFrame3" class="armor-frame" src="armor-frame-3.png" alt="" draggable="false">
+      <img id="armorFrame4" class="armor-frame" src="armor-frame-4.png" alt="" draggable="false">
+      <img id="doomscrollerStage2Art" class="armor-frame" src="doomscroller-stage2.gif" alt="The Doomscroller, aluminium-armored" draggable="false">
+      <img id="stage2Victory1" class="armor-frame" src="stage2-victory-1.png" alt="" draggable="false">
+      <img id="stage2Victory2" class="armor-frame" src="stage2-victory-2.png" alt="" draggable="false">
+      <img id="stage2Victory3" class="armor-frame" src="stage2-victory-3.png" alt="" draggable="false">
+      <div id="victoryFlash"></div>
+      <img id="doomscrollerThreat" class="armor-frame" src="doomscroller-threat.png" alt="" draggable="false">
+      <img id="doomscrollerRun1" class="armor-frame" src="doomscroller-run1.png" alt="" draggable="false">
+      <img id="doomscrollerRun2" class="run-far" src="doomscroller-run2.png" alt="" draggable="false">
+      <img id="droppedObject" class="floor-object" src="dropped-object.png" alt="" draggable="false">
+      <img id="objectReveal1" class="object-reveal" src="object-reveal-1.png" alt="" draggable="false">
+      <img id="objectReveal2" class="object-reveal" src="object-reveal-2.png" alt="" draggable="false">
+      <div id="inspectTextBox"><p id="inspectText"></p><button id="turnAroundBtn">Turn it around</button><button id="followStormBtn">FOLLOW HIM INTO THE STORM</button></div>
+
+      <img id="armorPieceA" class="armor-piece" src="" alt="" draggable="false">
+      <img id="armorPieceB" class="armor-piece" src="" alt="" draggable="false">
+      <div id="swordHitFlash"></div>
+      <img id="combatSword" src="combat-sword.png" alt="The Lightscroller" draggable="false">
+
+      <div id="rageDialogue"><p id="rageDialogueText"></p></div>
+      <div id="stageBanner"></div>
+
+      <div id="attackBanner">
+        <div class="attack-title">STRIKE NOW!</div>
+        <div class="attack-timerwrap">
+          <div class="attack-timer-track"><div class="attack-timer-fill" id="attackTimerFill"></div></div>
+        </div>
+      </div>
+
+      <div id="lightscrollerAttack">
+        <img src="sword-ground-2.png" alt="" draggable="false">
+      </div>
+      <div id="lightscrollerGround">
+        <img id="lightscrollerImg" src="sword-ground-1.png" alt="The Lightscroller" draggable="false">
+      </div>
       <div id="sawWrap">
-        <img id="sawImg" src="saw-maintenance.png" alt="The scroll saw">
-        <div class="saw-task" id="sawTask">KEEP THE SAW RUNNING</div>
+        <img id="sawImg" src="saw-maintenance.png" alt="The scroll saw" draggable="false">
         <div class="saw-timerwrap" id="sawTimerWrap">
           <div class="saw-timer-track"><div class="saw-timer-fill" id="sawTimerFill"></div></div>
         </div>
         <div class="hotspot oil-hotspot" id="oilHotspot" title="Plug the leak"></div>
         <div class="hotspot nut-hotspot" id="nutHotspot" title="Tighten the nut"></div>
+
+        <div class="spill-overlay" id="spillOverlay">
+          <img id="spillImg" src="" alt="Oil spill" draggable="false">
+          <div class="spill-hint">WIPE IT AWAY!</div>
+        </div>
 
         <div class="vib-panel" id="oilPanel">
           <div class="vib-title">OIL LEAK!</div>
@@ -501,15 +1125,37 @@
           <button id="tightenNutBtn">TIGHTEN</button>
         </div>
       </div>
-      <div class="lifebar">
-        <div class="lifebar-inner">
-          <div class="life-icon" id="life0">🐦</div>
-          <div class="life-icon" id="life1">🦉</div>
-          <div class="life-icon" id="life2">🦊</div>
-          <div class="life-icon" id="life3">🗡️</div>
-          <div class="life-icon" id="life4">👑</div>
+      <div class="top-row">
+        <div class="boss-lifebar">
+          <div class="life-icon" id="bossLife0">👑</div>
+          <div class="life-icon" id="bossLife1">👑</div>
+          <div class="life-icon" id="bossLife2">👑</div>
+        </div>
+        <div class="lifebar">
+          <div class="lifebar-inner">
+            <div class="life-icon" id="life0">🐦</div>
+            <div class="life-icon" id="life1">🦉</div>
+            <div class="life-icon" id="life2">🦊</div>
+            <div class="life-icon" id="life3">🗡️</div>
+            <div class="life-icon" id="life4">👑</div>
+          </div>
         </div>
       </div>
+      <div class="taskbar-wrap">
+        <div class="taskbar" id="sawTask">KEEP THE SAW RUNNING</div>
+      </div>
+    </div>
+
+    <div id="bossGameOver">
+      <div class="go-title">GAME OVER</div>
+      <button id="bossContinueBtn">CONTINUE</button>
+    </div>
+
+    <div id="stage2GameOver">
+      <img src="doomscroller-triumphant.png" alt="The Doomscroller, fully upgraded" draggable="false">
+      <div class="go2-main">GAME OVER</div>
+      <div class="go2-sub">The Doomscroller upgraded and cannot be defeated!</div>
+      <button id="stage2ContinueBtn">CONTINUE</button>
     </div>
   </div>
 
@@ -609,6 +1255,122 @@ function playImpact(){
     nGain.gain.setValueAtTime(0.5, now);
     nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
     noise.connect(hp); hp.connect(nGain); nGain.connect(ctx.destination);
+    noise.start(now);
+  }catch(e){}
+}
+function playClang(){
+  // Bright metallic ping for a successful Lightscroller deflection —
+  // distinct from playImpact()'s duller cinematic thud.
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const now = ctx.currentTime;
+    [1450, 2150].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.7, now + 0.22);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(i === 0 ? 0.28 : 0.16, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.26);
+    });
+    const bufferSize = ctx.sampleRate * 0.08;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(3000, now);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.4, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    noise.connect(hp); hp.connect(nGain); nGain.connect(ctx.destination);
+    noise.start(now);
+  }catch(e){}
+}
+function playCrack(){
+  // Violent breaking/cracking sound for the Stage 2 armor-break moment —
+  // a sharp low crack (splintering metal) plus a scatter of high brittle
+  // shard ticks, built from the same noise-burst + biquad-filter recipe
+  // used elsewhere in this file (see playClang/playImpact).
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const now = ctx.currentTime;
+
+    // Low crack — a short thumping snap
+    const crackBufSize = ctx.sampleRate * 0.15;
+    const crackBuf = ctx.createBuffer(1, crackBufSize, ctx.sampleRate);
+    const crackData = crackBuf.getChannelData(0);
+    for(let i=0;i<crackBufSize;i++){ crackData[i] = (Math.random()*2-1) * Math.pow(1 - i/crackBufSize, 2); }
+    const crackNoise = ctx.createBufferSource();
+    crackNoise.buffer = crackBuf;
+    const crackFilter = ctx.createBiquadFilter();
+    crackFilter.type = 'bandpass';
+    crackFilter.frequency.setValueAtTime(900, now);
+    crackFilter.Q.setValueAtTime(0.8, now);
+    const crackGain = ctx.createGain();
+    crackGain.gain.setValueAtTime(0.55, now);
+    crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    crackNoise.connect(crackFilter); crackFilter.connect(crackGain); crackGain.connect(ctx.destination);
+    crackNoise.start(now);
+
+    // Brittle high shard ticks — scattered fragments
+    for(let i=0;i<6;i++){
+      const t = now + 0.02 + Math.random()*0.12;
+      const shardBufSize = ctx.sampleRate * 0.05;
+      const shardBuf = ctx.createBuffer(1, shardBufSize, ctx.sampleRate);
+      const shardData = shardBuf.getChannelData(0);
+      for(let j=0;j<shardBufSize;j++){ shardData[j] = (Math.random()*2-1) * (1 - j/shardBufSize); }
+      const shardNoise = ctx.createBufferSource();
+      shardNoise.buffer = shardBuf;
+      const shardFilter = ctx.createBiquadFilter();
+      shardFilter.type = 'highpass';
+      shardFilter.frequency.setValueAtTime(4000 + Math.random()*2500, t);
+      const shardGain = ctx.createGain();
+      shardGain.gain.setValueAtTime(0.18, t);
+      shardGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      shardNoise.connect(shardFilter); shardFilter.connect(shardGain); shardGain.connect(ctx.destination);
+      shardNoise.start(t);
+    }
+  }catch(e){}
+}
+function playWoodKnock(){
+  // Soft wooden thonk for picking up/turning over the dropped object —
+  // a low sine "knock" plus a tiny dry tick, distinct from the metallic
+  // playClang()/playCrack() pair used for the armor.
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.12);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.3, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.18);
+
+    const bufferSize = ctx.sampleRate * 0.03;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(600, now);
+    bp.Q.setValueAtTime(1.2, now);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.2, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    noise.connect(bp); bp.connect(nGain); nGain.connect(ctx.destination);
     noise.start(now);
   }catch(e){}
 }
@@ -757,16 +1519,24 @@ function skipStraightToBoss(){
 let bossFightStarted = false;
 
 const LIFE_IDS = ['life0','life1','life2','life3','life4'];
-const OIL_TIME_MS = 9000;
-const OIL_CLICKS_NEEDED = 8;
-const NUT_TIME_MS = 9000;
+const BOSS_LIFE_IDS = ['bossLife0','bossLife1','bossLife2'];
+let bossDefeatedCount = 0;
+const OIL_TIME_MS = 5000;
+const OIL_CLICKS_NEEDED = 6;
+const NUT_TIME_MS = 5000;
 const TIGHTEN_CLICKS_NEEDED = 5;
 
-let stage1State = 'idle'; // idle | oil | oil_panel | nut | nut_panel | complete | gameover
+let stage1State = 'idle'; // idle | oil | oil_spill | oil_panel | nut | nut_spill | nut_panel | complete | gameover
 let defeatedCount = 0;
 let oilProgress = 0;
 let nutProgress = 0;
 let eventTimerHandle = null;
+
+const SPILL_CLICKS_NEEDED = 5;
+const SPILL_IMAGES = { oil: 'oil-spill-1.png', nut: 'oil-spill-2.png' };
+let spillProgress = 0;
+let spillActive = false;
+let spillCallback = null;
 
 function bf(id){ return document.getElementById(id); }
 
@@ -792,6 +1562,33 @@ function stopEventTimer(){
   showEventTimer(false);
 }
 
+function showSpill(kind, onCleared){
+  spillActive = true;
+  spillProgress = 0;
+  spillCallback = onCleared;
+  bf('spillImg').src = SPILL_IMAGES[kind];
+  bf('spillImg').style.opacity = '1';
+  bf('spillOverlay').classList.add('show');
+}
+function onSpillClick(){
+  if(!spillActive) return;
+  spillProgress++;
+  bf('spillImg').style.opacity = Math.max(0, 1 - spillProgress / SPILL_CLICKS_NEEDED);
+  if(spillProgress >= SPILL_CLICKS_NEEDED){
+    spillActive = false;
+    bf('spillOverlay').classList.remove('show');
+    const cb = spillCallback;
+    spillCallback = null;
+    if(cb) cb();
+  }
+}
+function hideSpill(){
+  spillActive = false;
+  spillCallback = null;
+  bf('spillOverlay').classList.remove('show');
+  bf('spillImg').style.opacity = '1';
+}
+
 function loseLife(){
   if(defeatedCount >= LIFE_IDS.length) return;
   const el = bf(LIFE_IDS[defeatedCount]);
@@ -808,19 +1605,779 @@ function loseLife(){
   }
 }
 
-function initBossFight(){
-  LIFE_IDS.forEach(id => { const el = bf(id); el.classList.remove('defeated','justHit'); });
-  defeatedCount = 0;
-  stage1State = 'idle';
-  setSawTask('KEEP THE SAW RUNNING!');
-  showEventTimer(false);
+function loseBossCrown(){
+  if(bossDefeatedCount >= BOSS_LIFE_IDS.length) return;
+  const el = bf(BOSS_LIFE_IDS[bossDefeatedCount]);
+  el.classList.add('defeated');
+  el.classList.remove('justHit');
+  void el.offsetWidth;
+  el.classList.add('justHit');
+  bossDefeatedCount++;
+  // Reaching 0 crowns will eventually mean Doomscroller is defeated —
+  // that end-of-fight hand-off isn't built yet, so nothing further
+  // happens here for now.
+}
 
+function loseLifeInStage2(){
+  // Missing an armor piece in Stage 2 now costs one of the player's life
+  // points (the same 🐦🦉🦊🗡️👑 bar used in Stage 1 — it's one shared pool
+  // for the whole fight) instead of ending Stage 2 on the very first miss.
+  // The wave sequence keeps going as long as a life remains; Stage 2 only
+  // ends once every life point is gone.
+  if(defeatedCount >= LIFE_IDS.length){
+    triggerStage2GameOver();
+    return;
+  }
+  const el = bf(LIFE_IDS[defeatedCount]);
+  el.classList.add('defeated');
+  el.classList.remove('justHit');
+  void el.offsetWidth;
+  el.classList.add('justHit');
+  defeatedCount++;
+  bossFight.classList.remove('shakeSmall');
+  void bossFight.offsetWidth;
+  bossFight.classList.add('shakeSmall');
+
+  if(defeatedCount >= LIFE_IDS.length){
+    triggerStage2GameOver(); // that was the last life point
+  } else {
+    resolveWavePiece(); // lives remain — the attack sequence continues
+  }
+}
+
+function initBossFight(){
   bf('plugBtn').addEventListener('click', onPlugClick);
   bf('tightenNutBtn').addEventListener('click', onTightenClick);
   bf('oilHotspot').addEventListener('click', () => { if(stage1State === 'oil') openOilPanel(); });
   bf('nutHotspot').addEventListener('click', () => { if(stage1State === 'nut') openNutPanel(); });
+  bf('spillOverlay').addEventListener('click', onSpillClick);
+  bf('bossContinueBtn').addEventListener('click', resetStage1);
+  bf('lightscrollerGround').addEventListener('click', onLightscrollerClick);
+  bf('lightscrollerAttack').addEventListener('click', onAttackSwordClick);
+  bf('droppedObject').addEventListener('click', onDroppedObjectClick);
+  bf('turnAroundBtn').addEventListener('click', onTurnAroundClick);
+  bf('followStormBtn').addEventListener('click', onFollowStormClick);
 
-  setTimeout(startOilLeak, 1400);
+  resetStage1();
+}
+
+function onLightscrollerClick(){
+  if(!bf('lightscrollerGround').classList.contains('lit')) return;
+  if(blindPhase !== 'none') return;
+  startBlindSequence();
+}
+
+// ---- Blind & Strike sequence (layered on top of the existing Stage 1 loop) ----
+const ATTACK_WINDOW_MS = 3500;
+const SWORD_MOVE_INTERVAL_MS = 650;
+let blindPhase = 'none'; // none | blinding | attack | hit
+let attackTimerHandle = null;
+let swordMoveHandle = null;
+
+function startBlindSequence(){
+  blindPhase = 'blinding';
+  bf('lightscrollerGround').classList.remove('lit');
+  bf('lightscrollerGround').style.opacity = '0';
+  setSawTask('THE LIGHTSCROLLER STRIKES!');
+
+  doomscrollerArt.classList.add('faded');
+  bf('doomscrollerBlindArt').classList.add('show');
+
+  setTimeout(startAttackWindow, 700);
+}
+
+function placeSwordRandomly(){
+  const el = bf('lightscrollerAttack');
+  el.style.left = Math.round(20 + Math.random() * 460) + 'px';
+  el.style.top = Math.round(80 + Math.random() * 360) + 'px';
+}
+
+function startAttackWindow(){
+  if(blindPhase !== 'blinding') return;
+  blindPhase = 'attack';
+  setSawTask('CLICK THE SWORD!');
+  bf('attackBanner').classList.add('show');
+  placeSwordRandomly();
+  bf('lightscrollerAttack').classList.add('show');
+  swordMoveHandle = setInterval(placeSwordRandomly, SWORD_MOVE_INTERVAL_MS);
+
+  const fill = bf('attackTimerFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  void fill.offsetWidth;
+  requestAnimationFrame(() => {
+    fill.style.transition = `width ${ATTACK_WINDOW_MS}ms linear`;
+    fill.style.width = '0%';
+  });
+  clearTimeout(attackTimerHandle);
+  attackTimerHandle = setTimeout(onAttackWindowFail, ATTACK_WINDOW_MS);
+}
+
+function stopAttackWindow(){
+  clearTimeout(attackTimerHandle);
+  clearInterval(swordMoveHandle);
+  bf('attackBanner').classList.remove('show');
+  bf('lightscrollerAttack').classList.remove('show');
+}
+
+const RAGE_LINE = 'YOU @$$HOLE! YOU F#%&ING DUMB MOTHER$#@%—!';
+const RAGE_READ_MS = 4200;
+
+function onAttackSwordClick(){
+  if(blindPhase !== 'attack') return;
+  blindPhase = 'hit'; // locks out further clicks immediately, timer already stopped below
+  stopAttackWindow();
+  loseBossCrown();
+  setSawTask('DIRECT HIT! STAGE 1 COMPLETE!');
+
+  // Cross-fade blinded -> stabbed, same spot.
+  bf('doomscrollerBlindArt').classList.remove('show');
+  bf('doomscrollerStabbedArt').classList.add('show');
+
+  // Angry dialogue, held long enough to read, then fades — leaving the
+  // stabbed pose on screen. This is where Stage 2 will eventually pick up.
+  const dlg = bf('rageDialogue');
+  bf('rageDialogueText').textContent = RAGE_LINE;
+  dlg.classList.remove('fadeout');
+  dlg.classList.add('show');
+  setTimeout(() => {
+    dlg.classList.add('fadeout');
+    setTimeout(() => {
+      dlg.classList.remove('show');
+      setTimeout(startArmorUpgrade, 400); // brief pause, then the armor transformation
+    }, 550);
+  }, RAGE_READ_MS);
+
+  // NOTE: this only completes Stage 1 (2 crowns remain). No health lost,
+  // no reset — Stage 2's real gameplay still isn't built, but the armor
+  // transformation below now plays after the dialogue.
+}
+
+// ---- Stage 1 -> Stage 2 armor-upgrade transformation ----
+const ARMOR_FRAME_MS = [400, 400, 600]; // frame1, frame2, frame3 hold times; frame4 holds forever
+const ARMOR_IMPACT_MS = 220;
+const SAW_FALL_MS = 650;
+
+function startArmorUpgrade(){
+  bf('doomscrollerStabbedArt').classList.remove('show');
+
+  const f1 = bf('armorFrame1'), f2 = bf('armorFrame2'), f3 = bf('armorFrame3'), f4 = bf('armorFrame4');
+  const saw = bf('sawWrap');
+
+  f1.classList.add('show', 'shake-subtle');
+  saw.classList.add('saw-shake-subtle');
+
+  setTimeout(() => {
+    f1.classList.remove('show', 'shake-subtle');
+    f2.classList.add('show', 'shake-strong');
+    saw.classList.remove('saw-shake-subtle');
+    saw.classList.add('saw-shake-wobble');
+  }, ARMOR_FRAME_MS[0]);
+
+  setTimeout(() => {
+    f2.classList.remove('show', 'shake-strong');
+    f3.classList.add('show', 'shake-small');
+    saw.classList.remove('saw-shake-wobble');
+    saw.classList.add('saw-shake-heavy');
+  }, ARMOR_FRAME_MS[0] + ARMOR_FRAME_MS[1]);
+
+  setTimeout(() => {
+    f3.classList.remove('show', 'shake-small');
+    f4.classList.add('show', 'shake-impact');
+    setTimeout(() => {
+      f4.classList.remove('shake-impact'); // settles back to translate(0,0), exact normal position
+    }, ARMOR_IMPACT_MS);
+
+    // The armor locking into place is what finally shakes the saw table loose —
+    // it tips, slides out of frame, and is gone for the rest of Stage 2.
+    saw.classList.remove('saw-shake-heavy');
+    void saw.offsetWidth;
+    saw.classList.add('saw-fall');
+    bossFight.classList.remove('boss-impact-shake');
+    void bossFight.offsetWidth;
+    bossFight.classList.add('boss-impact-shake');
+
+    setTimeout(() => {
+      saw.style.display = 'none';
+      f4.classList.remove('show');
+      bf('doomscrollerStage2Art').classList.add('show'); // Doomscroller's new permanent Stage 2 idle look
+      onArmorUpgradeComplete();
+    }, SAW_FALL_MS);
+  }, ARMOR_FRAME_MS[0] + ARMOR_FRAME_MS[1] + ARMOR_FRAME_MS[2]);
+}
+
+function onArmorUpgradeComplete(){
+  // Frame 4 (aluminium chest) is now Doomscroller's permanent idle art —
+  // nothing reverts it back to armorFrame 1-3 or the original attack.gif.
+  setTimeout(() => {
+    setSawTask('STAGE 2');
+    startStage2Test();
+  }, 500);
+}
+
+// =========================================================
+// Stage 2 — first-person Lightscroller combat.
+// Point-and-click only: the sword never attaches to the cursor, it just
+// swings toward wherever was clicked. Swing animation and the hit-radius
+// collision check are unchanged from the earlier test build — this pass
+// only replaces the single looping placeholder with the real 9-piece
+// attack sequence (two reusable slots so double-attacks can fly at once).
+// =========================================================
+const SWORD_IDLE_TRANSFORM = 'translateX(-32%) rotate(0deg) translate(0,0) scale(1)';
+const SWING_WINDUP_MS = 90;
+const SWING_ACTIVE_MS = 90;
+const SWING_RECOVER_MS = 220;
+const SWING_COOLDOWN_MS = 150;
+const HIT_RADIUS = 60; // generous forgiving radius, in the box's 640x560 coordinate space
+
+let stage2Active = false;
+let stage2Paused = false;
+let swordBusy = false;
+
+const ARMOR_ASSETS = {
+  bootLeft:      { src:'armor-boot-left.png',      ratio:342/475 },
+  bootRight:     { src:'armor-boot-right.png',     ratio:325/480 },
+  shoulderLeft:  { src:'armor-shoulder-left.png',  ratio:336/367 },
+  shoulderRight: { src:'armor-shoulder-right.png', ratio:325/367 },
+  belt:          { src:'armor-belt.png',           ratio:557/253 },
+  forearmLeft:   { src:'armor-forearm-left.png',   ratio:273/452 },
+  forearmRight:  { src:'armor-forearm-right.png',  ratio:286/458 },
+  legLeft:       { src:'armor-leg-left.png',       ratio:253/458 },
+  legRight:      { src:'armor-leg-right.png',      ratio:256/460 },
+};
+function pieceSize(key){
+  const a = ARMOR_ASSETS[key];
+  if(key === 'belt'){
+    // The belt/buckle is small and flat in real proportions — sized up a
+    // bit on its own axis so it reads at a glance like the other pieces.
+    const w = 130;
+    return { w, h: Math.round(w / a.ratio) };
+  }
+  const h = key.indexOf('shoulder') === 0 ? 85 : 90;
+  return { w: Math.round(h * a.ratio), h };
+}
+
+const SPAWN_POINTS = {
+  topLeft:   { x:50,  y:0   },
+  topRight:  { x:590, y:0   },
+  topCenter: { x:320, y:-20 },
+  left:      { x:-30, y:260 },
+  right:     { x:670, y:260 },
+};
+const SPAWN_KEYS_RANDOM = ['topLeft','topRight','left','right','topCenter'];
+const TARGET_POINT = { x:300, y:230 }; // roughly Doomscroller's chest
+
+function resolveSpawn(from){
+  if(from === 'random'){
+    const k = SPAWN_KEYS_RANDOM[Math.floor(Math.random() * SPAWN_KEYS_RANDOM.length)];
+    return SPAWN_POINTS[k];
+  }
+  return SPAWN_POINTS[from];
+}
+
+// Attack 1: boot, slow/easy. Attack 2: shoulder, opposite side, a little
+// faster. Attack 3: forearm, from above/diagonal. Attack 4: leg, faster and
+// from a random direction. Attack 5: DOUBLE — belt + the other boot, ~0.4s
+// apart. Attack 6: the other forearm, fast and random. Final: DOUBLE — the
+// other shoulder + other leg, dramatically different directions, ~0.25s
+// apart. Every one of the 9 assets is used exactly once.
+const ATTACK_SEQUENCE = [
+  { pieces:[ { key:'bootLeft',      from:'topLeft',  flight:2800, delay:0   } ] },
+  { pieces:[ { key:'shoulderRight', from:'topRight', flight:2300, delay:0   } ] },
+  { pieces:[ { key:'forearmLeft',   from:'topCenter',flight:2100, delay:0   } ] },
+  { pieces:[ { key:'legRight',      from:'random',   flight:1800, delay:0   } ] },
+  { pieces:[
+      { key:'belt',      from:'topLeft',  flight:2000, delay:0   },
+      { key:'bootRight', from:'topRight', flight:2000, delay:400 },
+  ] },
+  { pieces:[ { key:'forearmRight',  from:'random',   flight:1600, delay:0   } ] },
+  { pieces:[
+      { key:'shoulderLeft', from:'left',  flight:1700, delay:0   },
+      { key:'legLeft',      from:'right', flight:1700, delay:250 },
+  ] },
+];
+
+let waveIndex = 0;
+let waveRemaining = 0;
+let slotA = null, slotB = null;
+
+function makeSlot(elId){
+  return { el: bf(elId), state:'idle', key:null, timeout:null };
+}
+
+function startStage2Test(){
+  if(stage2Active) return;
+  stage2Active = true;
+  stage2Paused = false;
+  bf('combatSword').classList.add('show');
+  bossFight.addEventListener('click', onStage2Click);
+  bf('stage2ContinueBtn').addEventListener('click', resetStage2);
+  slotA = makeSlot('armorPieceA');
+  slotB = makeSlot('armorPieceB');
+  waveIndex = 0;
+  runWave(waveIndex);
+}
+
+function triggerStage2GameOver(){
+  stage2Paused = true;
+  if(slotA) clearTimeout(slotA.timeout);
+  if(slotB) clearTimeout(slotB.timeout);
+  bf('combatSword').classList.remove('show', 'windup', 'swinging', 'recovering');
+  bf('armorPieceA').classList.remove('show');
+  bf('armorPieceB').classList.remove('show');
+  setSawTask('DOOMSCROLLER UPGRADED!');
+  bossFight.classList.add('defeated'); // same grayscale treatment as the Stage 1 game over
+  bf('stage2GameOver').classList.add('show');
+}
+
+function resetStage2(){
+  bf('stage2GameOver').classList.remove('show');
+  bossFight.classList.remove('defeated');
+  stage2Paused = false;
+  swordBusy = false;
+  LIFE_IDS.forEach(id => { const el = bf(id); el.classList.remove('defeated','justHit'); });
+  defeatedCount = 0; // fresh life points for the new Stage 2 attempt
+  const sword = bf('combatSword');
+  sword.classList.remove('windup', 'swinging', 'recovering');
+  sword.style.transform = SWORD_IDLE_TRANSFORM;
+  sword.classList.add('show');
+  if(slotA){ clearTimeout(slotA.timeout); slotA.state = 'idle'; }
+  if(slotB){ clearTimeout(slotB.timeout); slotB.state = 'idle'; }
+  waveIndex = 0;
+  setSawTask('STAGE 2');
+  runWave(waveIndex);
+}
+
+function runWave(index){
+  if(index >= ATTACK_SEQUENCE.length){
+    startStage2VictorySequence();
+    return;
+  }
+  const wave = ATTACK_SEQUENCE[index];
+  const slots = [slotA, slotB];
+  waveRemaining = wave.pieces.length;
+  wave.pieces.forEach((def, i) => {
+    setTimeout(() => spawnPiece(slots[i], def), def.delay || 0);
+  });
+}
+
+// ---- Stage 2 victory: armor-break transformation ----
+// All 9 armor pieces deflected — Doomscroller's aluminium upgrade is
+// destroyed and he's forced back into his original wooden armor. Plays a
+// hard-cut 3-image sequence (no crossfade, matching every other transform
+// in this file), then leaves him settled on Image 3 as his new idle look.
+const VICTORY_FRAME_MS = [600, 250, 1000]; // Image1, Image2, Image3 hold times
+
+const VICTORY_BREATHE_MS = 1000; // beat held on the last-hit pose before the cutscene cuts in
+
+function startStage2VictorySequence(){
+  stage2Paused = true; // no more swings while the cutscene plays
+  bf('combatSword').classList.remove('show', 'windup', 'swinging', 'recovering');
+  setSawTask('ARMOR SHATTERED!');
+
+  // Let the moment breathe — hold on Doomscroller's current pose for a
+  // beat before cutting into the transformation, instead of slamming
+  // straight into Image 1.
+  setTimeout(runStage2VictorySequence, VICTORY_BREATHE_MS);
+}
+
+function runStage2VictorySequence(){
+  bf('doomscrollerStage2Art').classList.remove('show');
+  const v1 = bf('stage2Victory1'), v2 = bf('stage2Victory2'), v3 = bf('stage2Victory3');
+
+  // Image 1 — upgraded aluminium form, subtle building shake
+  v1.classList.add('show', 'shake-subtle');
+
+  setTimeout(() => {
+    // Image 2 — the impact. Strong shake, flash, metallic + cracking sound.
+    v1.classList.remove('show', 'shake-subtle');
+    v2.classList.add('show', 'shake-impact');
+
+    bossFight.classList.remove('boss-impact-shake');
+    void bossFight.offsetWidth;
+    bossFight.classList.add('boss-impact-shake');
+
+    bf('victoryFlash').classList.remove('show');
+    void bf('victoryFlash').offsetWidth;
+    bf('victoryFlash').classList.add('show');
+
+    playClang();
+    playCrack();
+    loseBossCrown(); // the armor break costs Doomscroller his 2nd crown — this is the end of Stage 2
+
+    setTimeout(() => {
+      // Image 3 — aluminium gone, back to original wooden armor. Shake
+      // eases off and settles rather than cutting instantly to still.
+      v2.classList.remove('show', 'shake-impact');
+      v3.classList.add('show', 'shake-small');
+      bossFight.classList.remove('boss-impact-shake');
+
+      setTimeout(() => {
+        v3.classList.remove('shake-small'); // settles to a still final pose
+        onStage2VictoryComplete();
+      }, 300);
+    }, VICTORY_FRAME_MS[1]);
+  }, VICTORY_FRAME_MS[0]);
+}
+
+function onStage2VictoryComplete(){
+  // Image 3 (wooden armor restored) stays on screen permanently as
+  // Doomscroller's new resting pose — same pattern as the Stage 1->2
+  // armor-upgrade transformation leaving Frame 4 showing forever.
+  // Stage 2 ends here: 2 of 3 crowns are now gone (1 remains).
+  setSawTask('STAGE 2 COMPLETE!');
+
+  // Brief pause to let that register, then Doomscroller threatens the
+  // player and flees — see startStage2ToStage3Intro().
+  setTimeout(startStage2ToStage3Intro, 700);
+}
+
+// ---- Stage 2 -> Stage 3 intro: threat, flee, and the dropped object ----
+const THREAT_READ_MS = 2000;   // hold on "THIS IS NOT OVER!" long enough to read
+const RUN1_HOLD_MS   = 450;    // close running pose, object still mid-air
+const RUN2_HOLD_MS   = 650;    // farther/smaller pose, object already landed
+
+const THREAT_LINE = 'THIS IS NOT OVER!';
+
+function startStage2ToStage3Intro(){
+  bf('stage2Victory3').classList.remove('show');
+
+  const threat = bf('doomscrollerThreat');
+  threat.classList.add('show', 'shake-subtle');
+
+  // Small aggressive jolt as he snaps around to point at the player.
+  bossFight.classList.remove('boss-impact-shake');
+  void bossFight.offsetWidth;
+  bossFight.classList.add('boss-impact-shake');
+
+  const dlg = bf('rageDialogue');
+  bf('rageDialogueText').textContent = THREAT_LINE;
+  dlg.classList.remove('fadeout');
+  dlg.classList.add('show');
+
+  setTimeout(() => {
+    dlg.classList.add('fadeout');
+    setTimeout(() => {
+      dlg.classList.remove('show', 'fadeout');
+      threat.classList.remove('show', 'shake-subtle');
+      runDoomscrollerEscape();
+    }, 550);
+  }, THREAT_READ_MS);
+}
+
+function runDoomscrollerEscape(){
+  // Frame 1 — close, running, the wooden object still mid-fall behind him
+  // (baked into the supplied art, not separately animated).
+  const run1 = bf('doomscrollerRun1');
+  run1.classList.add('show', 'shake-subtle');
+
+  setTimeout(() => {
+    // Frame 2 — hard-cut to farther/smaller: he's already a stride or two
+    // closer to the exit, and the object has landed on the floor.
+    run1.classList.remove('show', 'shake-subtle');
+    const run2 = bf('doomscrollerRun2');
+    run2.classList.add('show', 'shake-subtle');
+
+    setTimeout(() => {
+      // Frame 3 — he's gone through the exit; only the dropped object
+      // remains on the floor. Player regains control here.
+      run2.classList.remove('show', 'shake-subtle');
+      bf('droppedObject').classList.add('show');
+      onStage2ToStage3IntroComplete();
+    }, RUN2_HOLD_MS);
+  }, RUN1_HOLD_MS);
+}
+
+function onStage2ToStage3IntroComplete(){
+  setSawTask('...');
+  // The object is now clickable — hover highlight only, nothing tells the
+  // player what it is until they choose to inspect it.
+  bf('droppedObject').classList.add('interactive');
+  // TODO: Stage 3 doesn't start automatically here on purpose — the player
+  // discovers/inspects the dropped object first (see onDroppedObjectClick).
+}
+
+let objectInspected = false;
+
+function onDroppedObjectClick(){
+  const obj = bf('droppedObject');
+  if(!obj.classList.contains('interactive')) return;
+  obj.classList.remove('interactive'); // one-shot: picking it up ends floor interaction
+  playWoodKnock();
+  obj.classList.remove('picked-up');
+  void obj.offsetWidth;
+  obj.classList.add('picked-up'); // quick flip as the player scoops it up
+  objectInspected = true;
+  setSawTask('...');
+
+  setTimeout(() => {
+    obj.classList.remove('show');
+    startObjectInspection();
+  }, 400);
+}
+
+function startObjectInspection(){
+  // Picture 1 — the plain wooden side, held up for a closer look.
+  bf('objectReveal1').classList.add('show');
+  bf('inspectText').textContent = '...What is this?';
+  bf('turnAroundBtn').classList.add('show');
+  bf('inspectTextBox').classList.add('show');
+}
+
+function onTurnAroundClick(){
+  // Picture 2 — flips it over to reveal the glowing horse symbol.
+  bf('turnAroundBtn').classList.remove('show');
+  bf('objectReveal1').classList.remove('show');
+  playWoodKnock();
+  bf('objectReveal2').classList.add('show');
+  bf('inspectText').textContent = '...A horse? who is this guy really?';
+  bf('followStormBtn').classList.add('show'); // the hand-off into Stage 3
+}
+
+function onFollowStormClick(){
+  bf('followStormBtn').classList.remove('show');
+  bf('inspectTextBox').classList.remove('show');
+  bf('objectReveal2').classList.remove('show');
+  startStage3();
+}
+
+function startStage3(){
+  setSawTask('STAGE 3');
+  // TODO: no Stage 3 gameplay is built yet — this is the same kind of
+  // placeholder hand-off that "STAGE 2" was right after the Stage 1->2
+  // armor-upgrade transformation, before real Stage 2 mechanics existed.
+}
+
+function boxPointFromEvent(e){
+  const r = bossFight.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (640 / r.width),
+    y: (e.clientY - r.top) * (560 / r.height)
+  };
+}
+
+function spawnPiece(slot, def){
+  const el = slot.el;
+  const size = pieceSize(def.key);
+  const asset = ARMOR_ASSETS[def.key];
+  const spawn = resolveSpawn(def.from);
+
+  slot.state = 'flying';
+  slot.key = def.key;
+  clearTimeout(slot.timeout);
+
+  el.src = asset.src;
+  el.style.width = size.w + 'px';
+  el.style.height = size.h + 'px';
+  el.classList.remove('deflected', 'attached');
+  el.style.transition = 'none';
+  el.style.opacity = '1';
+  el.style.left = spawn.x + 'px';
+  el.style.top = spawn.y + 'px';
+  el.style.transform = 'rotate(0deg)';
+  el.classList.add('show');
+  void el.offsetWidth;
+
+  el.style.transition = `left ${def.flight}ms linear, top ${def.flight}ms linear, transform ${def.flight}ms linear`;
+  el.style.left = TARGET_POINT.x + 'px';
+  el.style.top = TARGET_POINT.y + 'px';
+  el.style.transform = 'rotate(180deg)';
+
+  slot.timeout = setTimeout(() => onPieceReachedBoss(slot), def.flight);
+}
+
+function onPieceReachedBoss(slot){
+  if(slot.state !== 'flying') return;
+  slot.state = 'resolved';
+  const el = slot.el;
+
+  // Freeze at its landed spot, then explicitly re-enable a transition
+  // (an inline transition:none from the flight setup otherwise sticks
+  // around and silently blocks any CSS-class-driven animation) for a
+  // quick "absorbed into his armor" shrink instead of sitting there
+  // fully visible and motionless until the hide timer fires.
+  el.style.transition = 'none';
+  void el.offsetWidth;
+
+  el.classList.add('attached');
+  el.style.transition = 'opacity .35s ease, transform .35s ease';
+  el.style.opacity = '0';
+  el.style.transform = 'rotate(180deg) scale(.5)';
+
+  setSawTask('ARMOR ATTACHED!');
+  setTimeout(() => {
+    el.classList.remove('show', 'attached');
+    el.style.transition = 'none';
+    loseLifeInStage2(); // missing a piece now costs a life point, not an instant game over
+  }, 380);
+}
+
+function resolveWavePiece(){
+  waveRemaining--;
+  if(waveRemaining <= 0){
+    waveIndex++;
+    setTimeout(() => runWave(waveIndex), 1000);
+  }
+}
+
+function onStage2Click(e){
+  if(!stage2Active || stage2Paused || swordBusy) return;
+  swingSword(boxPointFromEvent(e));
+}
+
+function swingSword(pt){
+  swordBusy = true;
+  const sword = bf('combatSword');
+
+  // Sword is anchored at left:52%, bottom:-30px of the 640x560 box.
+  const anchorX = 640 * 0.52;
+  const anchorY = 560 + 30;
+  const dx = pt.x - anchorX;
+  const dy = pt.y - anchorY; // always negative — clicks are above the sword's anchor
+  const angle = Math.max(-50, Math.min(50, dx / 3));
+  const swingX = Math.max(-70, Math.min(10, dx / 2));
+  const swingY = Math.max(-160, Math.min(-40, dy / 2));
+
+  sword.classList.remove('recovering', 'swinging');
+  sword.classList.add('windup');
+  sword.style.transform = 'translateX(-32%) rotate(6deg) translate(4px,6px) scale(.97)';
+
+  setTimeout(() => {
+    sword.classList.remove('windup');
+    sword.classList.add('swinging');
+    sword.style.transform = `translateX(-32%) rotate(${angle}deg) translate(${swingX}px, ${swingY}px) scale(1.05)`;
+
+    setTimeout(() => { checkSwingHit(pt); }, SWING_ACTIVE_MS);
+
+    setTimeout(() => {
+      sword.classList.remove('swinging');
+      sword.classList.add('recovering');
+      sword.style.transform = SWORD_IDLE_TRANSFORM;
+
+      setTimeout(() => {
+        sword.classList.remove('recovering');
+        setTimeout(() => { swordBusy = false; }, SWING_COOLDOWN_MS);
+      }, SWING_RECOVER_MS);
+    }, SWING_ACTIVE_MS);
+  }, SWING_WINDUP_MS);
+}
+
+function checkSwingHit(clickPt){
+  if(stage2Paused) return;
+  const boxRect = bossFight.getBoundingClientRect();
+  const scale = 640 / boxRect.width;
+  let best = null, bestDist = Infinity;
+
+  [slotA, slotB].forEach(slot => {
+    if(!slot || slot.state !== 'flying') return;
+    const rect = slot.el.getBoundingClientRect();
+    const center = {
+      x: (rect.left + rect.width / 2 - boxRect.left) * scale,
+      y: (rect.top + rect.height / 2 - boxRect.top) * scale
+    };
+    const dist = Math.hypot(center.x - clickPt.x, center.y - clickPt.y);
+    if(dist <= HIT_RADIUS && dist < bestDist){
+      best = { slot, center };
+      bestDist = dist;
+    }
+  });
+
+  if(best) onPieceHit(best.slot, best.center);
+  // else: swing connected with nothing — the piece(s) just keep flying.
+}
+
+function onPieceHit(slot, atPoint){
+  slot.state = 'resolved';
+  clearTimeout(slot.timeout);
+  const el = slot.el;
+  const boxRect = bossFight.getBoundingClientRect();
+  const scale = 640 / boxRect.width;
+  const rect = el.getBoundingClientRect();
+  const curX = (rect.left - boxRect.left) * scale;
+  const curY = (rect.top - boxRect.top) * scale;
+
+  el.style.transition = 'none';
+  el.style.left = curX + 'px';
+  el.style.top = curY + 'px';
+  void el.offsetWidth;
+
+  // Same fix as onPieceReachedBoss(): explicitly re-enable a transition
+  // here, otherwise the leftover inline transition:none from the freeze
+  // above blocks the fly-away and the piece just snaps invisible in place.
+  el.classList.add('deflected');
+  el.style.transition = 'left .45s ease-out, top .45s ease-out, opacity .4s ease-out .05s, transform .45s ease-out';
+  el.style.left = (curX + 260) + 'px';
+  el.style.top = (curY - 120) + 'px';
+  el.style.transform = 'rotate(220deg)';
+
+  playClang();
+  bossFight.classList.remove('boss-impact-shake');
+  void bossFight.offsetWidth;
+  bossFight.classList.add('boss-impact-shake');
+
+  const flash = bf('swordHitFlash');
+  flash.style.left = atPoint.x + 'px';
+  flash.style.top = atPoint.y + 'px';
+  flash.classList.remove('show');
+  void flash.offsetWidth;
+  flash.classList.add('show');
+  // Without an animation-fill-mode, the .3s pop reverts to the flash's
+  // default (fully opaque, full-size) state once it ends instead of
+  // staying invisible — leaving a stray yellow ball of light glowing at
+  // the last hit spot for the rest of the fight. Clean it up explicitly.
+  setTimeout(() => flash.classList.remove('show'), 320);
+
+  setSawTask('ARMOR DEFLECTED!');
+  setTimeout(() => {
+    el.classList.remove('show', 'deflected');
+    el.style.transition = 'none';
+    resolveWavePiece();
+  }, 480);
+}
+
+function onAttackWindowFail(){
+  if(blindPhase !== 'attack') return;
+  blindPhase = 'none';
+  stopAttackWindow();
+  doomscrollerArt.classList.remove('faded');
+  bf('doomscrollerBlindArt').classList.remove('show');
+  setSawTask('DOOMSCROLLER RECOVERS!');
+  setTimeout(resetStage1, 700);
+}
+
+function resetStage1(){
+  LIFE_IDS.forEach(id => { const el = bf(id); el.classList.remove('defeated','justHit'); });
+  defeatedCount = 0;
+  oilProgress = 0;
+  nutProgress = 0;
+  stage1State = 'idle';
+  setSawTask('KEEP THE SAW RUNNING!');
+  showEventTimer(false);
+  bf('oilPanel').classList.remove('show');
+  bf('nutPanel').classList.remove('show');
+  bf('oilHotspot').classList.remove('active');
+  bf('nutHotspot').classList.remove('active');
+  bf('nutBolt').classList.remove('shake');
+  hideSpill();
+  bossFight.classList.remove('defeated');
+  bf('bossGameOver').classList.remove('show');
+  bf('lightscrollerGround').classList.remove('lit');
+  bf('lightscrollerImg').src = 'sword-ground-1.png';
+  bf('lightscrollerGround').style.opacity = '1';
+
+  blindPhase = 'none';
+  clearTimeout(attackTimerHandle);
+  clearInterval(swordMoveHandle);
+  bf('attackBanner').classList.remove('show');
+  bf('lightscrollerAttack').classList.remove('show');
+  doomscrollerArt.classList.remove('faded');
+  bf('doomscrollerBlindArt').classList.remove('show');
+  bf('doomscrollerStabbedArt').classList.remove('show');
+  bf('rageDialogue').classList.remove('show','fadeout');
+  BOSS_LIFE_IDS.forEach(id => { const el = bf(id); el.classList.remove('defeated','justHit'); });
+  bossDefeatedCount = 0;
+
+  setTimeout(startOilLeak, 900);
 }
 
 // ---- Event 1: oil leak ----
@@ -832,10 +2389,14 @@ function startOilLeak(){
 }
 function openOilPanel(){
   if(stage1State !== 'oil') return;
-  stage1State = 'oil_panel';
-  oilProgress = 0;
-  bf('oilFill').style.width = '0%';
-  bf('oilPanel').classList.add('show');
+  stage1State = 'oil_spill';
+  bf('oilHotspot').classList.remove('active');
+  showSpill('oil', () => {
+    stage1State = 'oil_panel';
+    oilProgress = 0;
+    bf('oilFill').style.width = '0%';
+    bf('oilPanel').classList.add('show');
+  });
 }
 function onPlugClick(){
   if(stage1State !== 'oil_panel') return;
@@ -849,15 +2410,17 @@ function resolveOil(){
   bf('oilHotspot').classList.remove('active');
   stage1State = 'idle';
   setSawTask('NICE FIX! SAW STABILIZING...');
-  setTimeout(startLooseNut, 1600);
+  setTimeout(startLooseNut, 1000);
 }
 function onOilFail(){
-  if(stage1State !== 'oil' && stage1State !== 'oil_panel') return;
+  if(stage1State !== 'oil' && stage1State !== 'oil_spill' && stage1State !== 'oil_panel') return;
   bf('oilPanel').classList.remove('show');
+  hideSpill();
   loseLife();
   if(defeatedCount >= LIFE_IDS.length) return;
   stage1State = 'oil';
   setSawTask('OIL LEAK! PLUG THE HOLE!');
+  bf('oilHotspot').classList.add('active');
   startEventTimer(OIL_TIME_MS, onOilFail);
 }
 
@@ -870,11 +2433,15 @@ function startLooseNut(){
 }
 function openNutPanel(){
   if(stage1State !== 'nut') return;
-  stage1State = 'nut_panel';
-  nutProgress = 0;
-  bf('nutFill').style.width = '0%';
-  bf('nutBolt').classList.add('shake');
-  bf('nutPanel').classList.add('show');
+  stage1State = 'nut_spill';
+  bf('nutHotspot').classList.remove('active');
+  showSpill('nut', () => {
+    stage1State = 'nut_panel';
+    nutProgress = 0;
+    bf('nutFill').style.width = '0%';
+    bf('nutBolt').classList.add('shake');
+    bf('nutPanel').classList.add('show');
+  });
 }
 function onTightenClick(){
   if(stage1State !== 'nut_panel') return;
@@ -889,16 +2456,18 @@ function resolveNut(){
   bf('nutHotspot').classList.remove('active');
   stage1State = 'complete';
   setSawTask('SAW SECURE!');
-  setTimeout(completeStage1, 1400);
+  setTimeout(completeStage1, 1200);
 }
 function onNutFail(){
-  if(stage1State !== 'nut' && stage1State !== 'nut_panel') return;
+  if(stage1State !== 'nut' && stage1State !== 'nut_spill' && stage1State !== 'nut_panel') return;
   bf('nutBolt').classList.remove('shake');
   bf('nutPanel').classList.remove('show');
+  hideSpill();
   loseLife();
   if(defeatedCount >= LIFE_IDS.length) return;
   stage1State = 'nut';
   setSawTask('LOOSE NUT! TIGHTEN IT!');
+  bf('nutHotspot').classList.add('active');
   startEventTimer(NUT_TIME_MS, onNutFail);
 }
 
@@ -906,7 +2475,10 @@ function onNutFail(){
 function completeStage1(){
   stopEventTimer();
   setSawTask('STAGE 1 COMPLETE!');
-  // TODO: grant "The Lightscroller" and transition into Stage 2 (not yet built).
+  bf('lightscrollerImg').src = 'sword-ground-2.png';
+  bf('lightscrollerGround').classList.add('lit');
+  // TODO: full Stage 2 hand-off still needs to be built; for now the sword
+  // just lights up and reports a click via onLightscrollerClick().
 }
 function triggerGameOver(){
   stopEventTimer();
@@ -915,8 +2487,10 @@ function triggerGameOver(){
   bf('nutPanel').classList.remove('show');
   bf('oilHotspot').classList.remove('active');
   bf('nutHotspot').classList.remove('active');
+  hideSpill();
   setSawTask('THE SAW IS DEAD...');
-  // TODO: real game-over overlay + retry button. Placeholder for now.
+  bossFight.classList.add('defeated');
+  setTimeout(() => { bf('bossGameOver').classList.add('show'); }, 500);
 }
 
 // The cinematic only plays once per boss attempt. Once real boss-fight
